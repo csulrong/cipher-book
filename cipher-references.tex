@@ -1,0 +1,108 @@
+
+Revocation still doesn't work
+https://www.imperialviolet.org/2014/04/29/revocationagain.html
+
+频率分析破解密码
+https://blog.csdn.net/qq_37523868/article/details/82500223
+
+社会工程学
+https://baijiahao.baidu.com/s?id=1551415368544324&wfr=spider&for=pc
+
+
+https://www.freebuf.com/column/177144.html
+
+
+OCSP Must-Staple
+https://scotthelme.co.uk/ocsp-must-staple/
+
+
+openssl RSA
+https://www.jianshu.com/p/9da812e0b8d0
+
+Enigma
+https://en.wikipedia.org/wiki/Enigma_machine
+
+
+
+
+
+1. 生成密钥
+openssl genrsa -out key.pem 1024
+    -out 指定生成文件，此文件包含公钥和私钥两部分，所以即可以加密，也可以解密
+    1024 生成密钥的长度
+
+    rongl@jetdembp ~ $ openssl genrsa -out key.pem 1024
+    Generating RSA private key, 1024 bit long modulus
+    ....++++++
+    .........++++++
+    e is 65537 (0x10001)
+    rongl@jetdembp ~ $ cat key.pem
+    -----BEGIN RSA PRIVATE KEY-----
+    MIICXAIBAAKBgQDClRj3zB46Z/Fc1BjPOKxvaZaLQg4R8MdtteYkyTVdeHPeknJY
+    Y+JZs/eOZPkHXNFuVOUD/eMBB5guTAV4zBToBR8ujXvDT6Q5AU5SzzM/GU8wTMtH
+    CXGNRHwtPekHPGizsaDrhwIzLhdFnNySCOvtQ0e8YgLLLWsiTqiATLZfhwIDAQAB
+    AoGAJkVhBcv13hL3nARzZL6G29ruqzEwx0KOVvvB6lZQ0rOQRqSTLONob7A/7pfZ
+    iyMsZgD4klJrRZaSzfhR0zKAodH1MHV9UnFSByJz7vfNMUi8fBgyFellrT5ZLC4U
+    zCeROEy3GThLs5Id3FLZAqAOIA/kqhpA52MmElGyg8oakmECQQDuHQ1V8aa7+4c9
+    /KdRv+FGnDm1q5zeKp7aORjvXYdyb5SIbIBHHAird8AZwoq1V8iV3oV54UcQ+LmL
+    bR+zEyVJAkEA0TLwMCfiNtyuBQkclIZzWmO+Xzuqaur3Et5B9fLEsniMZOq9AcHx
+    g78hZt+cI4qbo/uV3FqFvRaV49N6aATuTwJADrFkPUVoEHl44u5QNM8uS3kgZoFs
+    cJkYrEaRr1OKJBmWhMSNNdYZAtuk0vIaNQ5xpi3Q9rBb/kQazuuw5Q/tYQJBALjg
+    GE2mYY70VUGT/NLxQu4Fqc7FjuRwA6uECazOP7AtQn1IyYHNIJ+6gE1Gndj2/Hbd
+    tmGHChvB4vL1CH72pJcCQBJOYpWKRySJC3G4o1WHiqajx0X7nu5Y/gE8WNWMjQFb
+    fUEJ2pgM5FwBe47vw8RTCk1axZdQwNOsNU1CYaHxg9I=
+    -----END RSA PRIVATE KEY-----
+
+
+2. 提取PEM格式公钥
+openssl rsa -in key.pem -pubout -out pubkey.pem
+    -in 指定输入的密钥文件
+    -out 指定提取生成公钥的文件(PEM公钥格式)
+
+    rongl@jetdembp ~ $ openssl rsa -in key.pem -pubout -out pubkey.pem
+    writing RSA key
+    rongl@jetdembp ~ $ cat pubkey.pem
+    -----BEGIN PUBLIC KEY-----
+    MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDClRj3zB46Z/Fc1BjPOKxvaZaL
+    Qg4R8MdtteYkyTVdeHPeknJYY+JZs/eOZPkHXNFuVOUD/eMBB5guTAV4zBToBR8u
+    jXvDT6Q5AU5SzzM/GU8wTMtHCXGNRHwtPekHPGizsaDrhwIzLhdFnNySCOvtQ0e8
+    YgLLLWsiTqiATLZfhwIDAQAB
+    -----END PUBLIC KEY-----
+
+
+3. 提取PEM RSAPublicKey格式公钥
+openssl rsa -in key.pem -RSAPublicKey_out -out pubkey.pem
+    -in 指定输入的密钥文件
+    -out 指定提取生成公钥的文件(PEM RSAPublicKey格式)
+
+    rongl@jetdembp ~ $ openssl rsa -in key.pem -RSAPublicKey_out -out pubkey.pem
+    writing RSA key
+    rongl@jetdembp ~ $ cat pubkey.pem
+    -----BEGIN RSA PUBLIC KEY-----
+    MIGJAoGBAMKVGPfMHjpn8VzUGM84rG9plotCDhHwx2215iTJNV14c96Sclhj4lmz
+    945k+Qdc0W5U5QP94wEHmC5MBXjMFOgFHy6Ne8NPpDkBTlLPMz8ZTzBMy0cJcY1E
+    fC096Qc8aLOxoOuHAjMuF0Wc3JII6+1DR7xiAsstayJOqIBMtl+HAgMBAAE=
+    -----END RSA PUBLIC KEY-----
+
+
+4. 公钥加密文件
+openssl rsautl -encrypt -in plaintext.file -inkey pubkey.pem -pubin -out ciphertext.file
+    -in 指定被加密的文件
+    -inkey 指定加密公钥文件
+    -pubin 表面是用纯公钥文件加密
+    -out 指定加密后的文件
+
+    rongl@jetdembp ~ $ echo "hello, world." >> plaintext.file
+    rongl@jetdembp ~ $ cat plaintext.file
+    hello, world.
+    rongl@jetdembp ~ $ openssl rsautl -encrypt -in plaintext.file -inkey pubkey.pem -pubin -out ciphertext.file
+    rongl@jetdembp ~ $ cat ciphertext.file
+    ��^<؎j"��"6�)t�%ZUh�{�H�&@YT]o7""��pȎ�����[#�Fh�W�2��S��)�R��N,L�	���U�L�7�E��?��`}�TW�|��zn��"仌��>�褪w�l>�
+
+
+5. 私钥解密文件
+openssl rsautl -decrypt -in ciphertext.file -inkey key.pem -out plaintext.file
+    -in 指定需要解密的文件
+    -inkey 指定私钥文件
+    -out 指定解密后的文件
+

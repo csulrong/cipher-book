@@ -1,0 +1,66 @@
+% language=en macros=mkvi
+
+% \enabledirectives[hyphenator.optimize]
+% \enabledirectives[hyphenator.flatten]
+% \setuphyphenation[method=traditional]
+
+\usemodule[zhfonts]
+
+% \enabletrackers[*defin*]
+
+% \enablemode[screen]
+\enablemode[print]
+% \enablemode[book]
+
+% \usemodule[luacalls]
+
+% todo: check startintro .. stopintro each chapter
+
+% \showframe
+
+\startproduct cipher
+
+\environment cipher-environment
+
+
+\startnotmode[screen]
+    \component   cipher-titlepage-paper
+    \component   cipher-colofon-paper
+\stopnotmode
+
+\startmode[screen]
+    \environment cipher-environment-screen
+    \component   cipher-titlepage-screen
+\stopmode
+
+\startfrontmatter
+    \component   cipher-preface
+    \component   cipher-contents
+%     % \component   cipher-conventions
+\stopfrontmatter
+
+\startbodymatter
+    \component   cipher-tour
+    \component   cipher-stories
+    \component   cipher-symmetric
+    \component   cipher-modes
+    \component   cipher-asymmetric
+\stopbodymatter
+
+% \startappendices
+%   % \component   cipher-programs
+% \stopappendices
+
+% \startbackmatter
+%     \component   cipher-index
+% \stopbackmatter
+
+% \startmode[screen]
+%     \component   cipher-colofon-screen
+% \stopmode
+
+% \startnotmode[screen]
+%     \component   cipher-backpage
+% \stopnotmode
+
+\stopproduct

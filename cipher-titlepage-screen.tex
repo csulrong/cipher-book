@@ -1,0 +1,27 @@
+\startcomponent cipher-titlepage-screen
+
+\environment cipher-environment
+
+\startstandardmakeup[topstate=empty]
+
+    \definefont[Title]   [RegularBold*default at 48pt]
+    \definefont[Version][BoldItalic*default at 24pt]
+    \definefont[Small] [RegularBold*default at 24pt]
+    \definefont[Author]  [RegularBold*default at 16pt]
+
+% \showstruts
+
+    \startcolor[darkyellow]
+
+        \vfill
+        \Title     \hfill  轻松理解密码技术  \hfill   \par
+        \Version   \hfill  预览版          \hfill   \par
+        \vfill
+        % \Tiny   \setstrut \hfill \strut \currentdate \par
+        \Author  \setstrut \hfill \strut 荣亮 (著)   \par
+
+    \stopcolor
+
+\stopstandardmakeup
+
+\stopcomponent

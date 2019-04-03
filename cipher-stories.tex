@@ -1,0 +1,743 @@
+% language=en macros=mkvi
+
+\startcomponent cipher-tour
+
+\environment cipher-environment
+
+\startchapter[reference=sec:stories,title={密码的历史典故}]
+
+% \startintro
+
+从密码学发展历程来看，可分为古典密码和现代密码两类。古典密码有着悠久的历史，是以字符为基本加密单元的密码。而现代密码
+则以信息块为基本的加密单元。古典密码和现代密码的分水岭大致就是在计算机问世的时候。本章将重点回顾古典密码的发展历史并
+分享一些和密码相关的有趣典故和历史事件。
+
+% 古典密码学主要有两大基本方法：
+% 置换密码(又称易位密码)：明文的字母保持相同，但顺序被打乱了。
+% 代替密码：就是将明文的字符替换为密文中的另一种的字符，接收者只要对密文做反向替换就可以恢复出明文。
+
+% \stopintro
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\startsection[title={中国古代人民怎么加密？}]
+
+早期加密算法主要使用在军事中，中国历史上最早关于加密算法的记载出自于周朝兵书《六韬·龙韬》中的《阴符》和《阴书》。
+其中《阴符》记载了：
+
+\startquotation
+{\it
+太公曰：“主与将，有阴符，凡八等。有大胜克敌之符，长一尺。破军擒将之符，长九寸。降城得邑之符，长八寸。却敌报远之符，
+长七寸。警众坚守之符，长六寸。请粮益兵之符，长五寸。败军亡将之符，长四寸。失利亡士之符，长三寸。诸奉使行符，稽留，
+若符事闻，泄告者，皆诛之。八符者，主将秘闻，所以阴通言语，不泄中外相知之术。敌虽圣智，莫之能识。”
+}
+\stopquotation
+
+简单来说，阴符是以八等长度的符来表达不同的消息和指令，属于密码学中的替代法（\in{图}[fig:cipher-yinfu]），在应用
+中是把信息转变成敌人看不懂的符号，但知情者知道这些符号代表的含义。
+
+\startplacefigure
+  [title={阴符所蕴含的加密原理：替换法}, reference=fig:cipher-yinfu]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  textnode/.style={draw=red!62.5!black, thick, fill=white!62.5!black, inner sep=2mm, font=\Tiny},
+  node distance=3mm]
+
+  \node [textnode] (dskd) {大胜克敌};
+  \node [textnode, right=of dskd] (pjqj) {破军擒将};
+  \node [textnode, right=of pjqj] (xcdy) {降城得邑};
+  \node [textnode, right=of xcdy] (qdby) {却敌报远};
+  \node [textnode, right=of qdby] (jzjs) {警众坚守};
+  \node [textnode, right=of jzjs] (qlyb) {请粮益兵};
+  \node [textnode, right=of qlyb] (bjwj) {败军亡将};
+  \node [textnode, right=of bjwj] (slwt) {失利亡士}; 
+
+  \node [textnode, below=1cm of dskd] (yichi)  {符长一尺} edge [pre] (dskd);
+  \node [textnode, below=1cm of pjqj] (jiucun) {符长九寸} edge [pre] (pjqj);
+  \node [textnode, below=1cm of xcdy] (bacun)  {符长八寸} edge [pre] (xcdy);
+  \node [textnode, below=1cm of qdby] (qicun)  {符长七寸} edge [pre] (qdby);
+  \node [textnode, below=1cm of jzjs] (liucun) {符长六寸} edge [pre] (jzjs);
+  \node [textnode, below=1cm of qlyb] (wucun)  {符长五寸} edge [pre] (qlyb);
+  \node [textnode, below=1cm of bjwj] (sicun)  {符长四寸} edge [pre] (bjwj);
+  \node [textnode, below=1cm of slwt] (sancun) {符长三寸} edge [pre] (slwt);
+
+  \startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, inner sep=0.5cm, 
+  rounded corners, 
+  fit=(dskd) (sancun)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+阴符只能表述最关键的八种信号，无法表达丰富的含义和传递更具体的消息。所以，《阴书》又作了补充：
+
+\startquotation
+{
+\it
+武王问太公曰：“引兵深入诸侯之地，主将欲合兵，行无穷之变，图不测之利，其事烦多，符不能明；相去辽远，言语不通。为之
+奈何？” 太公曰：“诸有阴事大虑，当用书，不用符。主以书遗将，将以书问主。书皆一合而再离，三发而一知。再离者，分书为
+三部。三发而一知者，言三人，人操一分，相参而不相知情也。此谓阴书。敌虽圣智，莫之能识。”
+}
+\stopquotation
+
+阴书作为阴符的补充，所有密谋大计，都应当用阴书，而不用阴符。国君用阴书向主将传达指示，主将用阴书向国君请示问题，这种
+阴书都是一合而再离（把一封书信分为三个部分）、三发而一知（派三个人送信，每人负责其中的一部分）。阴书运用了文字拆分法
+直接把一份文字拆成三份（\in{图}[fig:cipher-yinshu]），由三种渠道发送到目标方手中。敌人只有同时截获三份内容才可能
+破解阴书上写的内容。
+
+\startplacefigure
+  [title={阴书所蕴含的加密原理：文字分拆法}, reference=fig:cipher-yinshu]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  textnode/.style={draw=red!62.5!black, thick, fill=white!62.5!black, inner sep=2mm, font=\Tiny},
+  node distance=1cm]
+
+  \node [textnode] (mmdj) {密谋大计};
+  \node [textnode, below=of mmdj]  (mmdj2) {密谋大计第2部分} edge [pre] (mmdj);
+  \node [textnode, left=of mmdj2]  (mmdj1) {密谋大计第1部分} edge [pre] (mmdj);
+  \node [textnode, right=of mmdj2] (mmdj3) {密谋大计第3部分} edge [pre] (mmdj);
+
+  \startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, inner sep=0.5cm, 
+  rounded corners, 
+  fit=(mmdj) (mmdj1) (mmdj2) (mmdj3)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+无论是阴符，还是阴书，都有着一定的局限性。一是有可能被对方截获而难以达到传递消息的目的，二是有可能被对方破译内容并被
+对方将计就计加以利用。因此，并不是“敌虽圣智，莫之能识”。张献忠袭取襄阳就说明了这一点。
+
+崇祯十三年七月，张献忠率领起义军突破明军防线，进入四川，杨嗣昌亦率明军十万尾随追击。面对强敌，张献忠挥师东进，于次年
+二月进入湖北兴山、当阳。在东进途中，起义军活捉了由襄阳（今湖北襄樊市）回四川的杨嗣昌的军使。张献忠从其口中得知杨嗣昌
+大营所在地襄阳城防空虚，决定奔袭襄阳。他杀掉使者，搜出所携带的兵符，挑选了二十八名起义军战士，换上明军的衣服，持兵符
+先行。张献忠自己则亲率二千精骑，随后跟进，一昼夜急行三百里，直扑襄阳。伪装成明军的起义军士兵到达襄阳时正是夜间，他们
+自称是督师杨嗣昌派来调运军械的，并出示兵符。守城明军用小筐吊上兵符，细心查验，完全吻合，才命开门放入。城门刚打开，
+二十八名起义军战士一涌而入，挥刀砍杀守门明军，占领城门。张献忠率领的后续部队恰好赶到，顺利入城。一时杀声震天，明军
+惊慌失措，被迫投降。起义军杀死襄王朱翊铭，降俘明军数千人，占领襄阳，杨嗣昌闻讯呕血而死。此战表明，无论是阴符还是阴书，
+都不是万无一失的。
+
+\startsection[title={凯撒密码}]
+\index{caesar}
+
+我们把视角切换到世界历史的长河中，看看古罗马时期凯撒大帝是怎么使用加密算法对军事信息进行加密的。根据罗马早期纪传体作者
+盖乌斯·苏维托尼乌斯的记载，恺撒大帝的加密策略很简单，就是把字母按照字母表顺序向后移动几位，但是偏移量（offset）只有他
+和将军知道，如果移动后超过了字母表中的最后一个字母（对于英文字母表而言就是\type{Z}），就回到字母表的第一个字母重新开始
+下一轮。以英文字母表为例，在偏移量为3的情况下，\type{A}将会替换为\type{D}，\type{B}将会被替换为\type{E}，
+\type{W}会被替换为\type{Z}，\type{X}会被替换为\type{A}；明文\type{HELLO}会被转换为密文\type{KHOOR}。这种加密
+方法又被称为移位加密。
+
+
+\startplacefigure
+  [title={凯撒密码的加密原理：替换法}, reference=fig:caesar]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, minimum height=1.2em, minimum width=1.2em, font=\Tiny}]
+  
+  \foreach \a/\n in {A/0, B/1, C/2, D/3, E/4, F/5, G/6, H/7, I/8, 
+    J/9, K/10, L/11, M/12, N/13, O/14, P/15, Q/16, R/17, S/18,
+    T/19, U/20, V/21, W/22, X/23, Y/24, Z/25, A/26, B/27, C/28} {
+    \ifnum \n < 26
+    \node (\a-1) at (\n * 5.2mm, 2) {\a};
+    \fi
+    \ifnum \n > 2
+    \node (\a-2) at (\n * 5.2mm, 0) {\a};
+    \else
+    \node [dashed] (\a-2) at (\n * 5.2mm, 0) {\a};
+    \fi
+  }
+
+  \foreach \a/\b in {A/D, B/E, C/F, D/G, E/H, F/I, G/J, H/K, I/L, 
+    J/M, K/N, L/O, M/P, N/Q, O/R, P/S, Q/T, R/U, S/V,
+    T/W, U/X, V/Y, W/Z, X/A, Y/B, Z/C} {
+    \draw [->,shorten >=1pt,>=stealth',semithick] (\a-1.south) -- (\b-2.north);
+  }
+\stoptikzpicture
+}
+\stopplacefigure
+
+
+凯撒密码的解密方法也很一目了然，只需要将密文中的每个字母向相反方向平移规定的偏移量便可解密出明文。恺撒密码的加密、
+解密算法还能够通过同余的数学方法进行计算。首先将字母表中的字母按顺序用数字代替，$A=0$，$B=1$，...，$Z=25$。
+此时偏移量为$k$的加密算法的数学公式即为：
+
+\startformula
+E_k(x) = (x + k) \mod 26
+\stopformula
+
+解密算法的数学公式可以表示为：
+\startformula
+D_k(x) = (x + 26 - k) \mod 26
+\stopformula
+
+从加密和解密数学公式可以看出，当偏移量$k = 13$时（字母表内所有字母数量的一半），凯撒密码加密和解密算法的公式
+完全相同，这是一种特殊的凯撒密码的变种算法，被称为ROT13。ROT13在英文网络论坛常常用作隐藏八卦、妙句、谜题解答以及
+某些脏话的工具，目的是逃过版主或管理员的匆匆一瞥。因为ROT13的加密和解密计算公式完全相同，很明显，文字经过两次
+ROT13加密之后，会恢复成原来的文字。
+
+凯撒密码中的偏移量就相当于加密算法中的密钥。这个偏移量必须由发送者和接收者事先约定好。那么，当接收者以外的人
+窃取到用凯撒密码加密后的密文之后，是不是就无法破解这个密文了呢？或者换句话说，凯撒密码能够被破解吗？
+
+破解密码的复杂度很大程度上取决于{\it 密钥空间}（keyspace）的大小，所谓密钥空间是指密钥的取值范围到底有多大。凯撒
+密码中的密钥是偏移量$k$，其取值范围为0至25的整数，共26种可能的取值，密钥空间非常有限。攻击者往往可以采用暴力破解
+（brute-force attack）的方法就可以轻而易举地破解凯撒密码。
+
+假设发送者和接收者之间约定的偏移量为3，那么明文\type{CRYPTOGRAPHY}加密后的密文则为\type{FUBSWRJUDSKB}。
+当第三方窃听到密文之后，由于凯撒密码的密钥空间只有26种可能的取值，窃听者可以使用穷举搜索（exhausitive search）
+的方法对每种可能的密钥取值尝试一遍：
+
+\starttyping
+k =  0: FUBSWRJUDSKB => FUBSWRJUDSKB
+k =  1: FUBSWRJUDSKB => ETARVQITCRJA
+k =  2: FUBSWRJUDSKB => DSZQUPHSBQIZ
+k =  3: FUBSWRJUDSKB => CRYPTOGRAPHY
+k =  4: FUBSWRJUDSKB => BQXOSNFQZOGX
+k =  5: FUBSWRJUDSKB => APWNRMEPYNFW
+k =  6: FUBSWRJUDSKB => ZOVMQLDOXMEV
+k =  7: FUBSWRJUDSKB => YNULPKCNWLDU
+k =  8: FUBSWRJUDSKB => XMTKOJBMVKCT
+k =  9: FUBSWRJUDSKB => WLSJNIALUJBS
+k = 10: FUBSWRJUDSKB => VKRIMHZKTIAR
+k = 11: FUBSWRJUDSKB => UJQHLGYJSHZQ
+k = 12: FUBSWRJUDSKB => TIPGKFXIRGYP
+k = 13: FUBSWRJUDSKB => SHOFJEWHQFXO
+k = 14: FUBSWRJUDSKB => RGNEIDVGPEWN
+k = 15: FUBSWRJUDSKB => QFMDHCUFODVM
+k = 16: FUBSWRJUDSKB => PELCGBTENCUL
+k = 17: FUBSWRJUDSKB => ODKBFASDMBTK
+k = 18: FUBSWRJUDSKB => NCJAEZRCLASJ
+k = 19: FUBSWRJUDSKB => MBIZDYQBKZRI
+k = 20: FUBSWRJUDSKB => LAHYCXPAJYQH
+k = 21: FUBSWRJUDSKB => KZGXBWOZIXPG
+k = 22: FUBSWRJUDSKB => JYFWAVNYHWOF
+k = 23: FUBSWRJUDSKB => IXEVZUMXGVNE
+k = 24: FUBSWRJUDSKB => HWDUYTLWFUMD
+k = 25: FUBSWRJUDSKB => GVCTXSKVETLC
+\stoptyping
+
+纵览所有尝试的破解，就会发现只有当$k = 3$的时候，密文\type{FUBSWRJUDSKB}才可以解密出有意义的字符序列
+\type{CRYPTOGRAPHY}，即“密码学”的英文单词。因此，凯撒密码是一种极其不安全的加密方法，可以被攻击者在很快的时间
+内破解，无法保护重要的秘密。
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startsection[title={简单替换密码}]
+\index{substitution}
+
+\startsubsection[title={什么是简单替换密码}]
+凯撒密码通过将明文中的每个字符按照在字符表中的顺序平移固定数量的字符数来生成密文。由于字符偏移量的取值空间极其有限，
+致使凯撒密码能被轻而易举地破解。我们也提到了密钥空间这个概念，凯撒密码就是因为过小的密钥空间可以被攻击者使用暴力
+破解的方法在非常快的时间内被破解。你可能意识到凯撒密码这种通过平移字符来实现字符替换的方法过于公式化，如果把这种映射
+用随机化的方式打乱，是不是就完美了呢？这就是我们接下来要讨论的简单替换密码。
+
+简单替换密码将字母表中的26个字母，分别与其他字母建立一一映射的关系，这种映射关系不像凯撒密码那样通过平移字符这种
+线性化的方法，而是用一个映射表来描述明文字符和密文字符之间的映射关系，这种映射表也称为字符替换表。为了更直观地展示
+字符之间的映射关系，我们把明文中的字符都用小写字母表示，密文中的字符都用大写字母表示。\in{图}[fig:substitution]
+就是一个简单的字符替换表。
+
+% python dict: {'a': 'P', 'c': 'T', 'b': 'O', 'e': 'Q', 'd': 'L', 'g': 'V', 'f': 'K', 'i': 'N', 'h': 'C', 'k': 'W', 'j': 'Y', 'm': 'U', 'l': 'Z', 'o': 'A', 'n': 'B', 'q': 'M', 'p': 'G', 's': 'F', 'r': 'S', 'u': 'R', 't': 'E', 'w': 'D', 'v': 'H', 'y': 'I', 'x': 'J', 'z': 'X'}
+\startplacefigure
+  [title={简单替换密码的映射表}, reference=fig:substitution]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, minimum width=1.3em, minimum height=1.3em, font=\Tiny}]
+
+  \foreach \a/\n in {a/0, b/1, c/2, d/3, e/4, f/5, g/6, h/7, i/8, 
+    j/9, k/10, l/11, m/12, n/13, o/14, p/15, q/16, r/17, s/18,
+    t/19, u/20, v/21, w/22, x/23, y/24, z/25} {
+    \node (\a) at (\n * 5.2mm, 3) {\a};
+  }
+
+  \foreach \b/\n in {A/0, B/1, C/2, D/3, E/4, F/5, G/6, H/7, I/8, 
+    J/9, K/10, L/11, M/12, N/13, O/14, P/15, Q/16, R/17, S/18,
+    T/19, U/20, V/21, W/22, X/23, Y/24, Z/25} {
+    \node (\b) at (\n * 5.2mm, 0) {\b};
+  }
+
+  \foreach \a/\b in {a/P, c/T, b/O, e/Q, d/L, g/V, f/K, i/N, h/C,
+  k/W, j/Y, m/U, l/Z, o/A, n/B, q/M, p/G, s/F,
+  r/S, u/R, t/E, w/D, v/H, y/I, x/J, z/X} {
+    \draw [->,shorten >=1pt,>=stealth',semithick] (\a.south) -- (\b.north);
+  }
+\stoptikzpicture
+}
+\stopplacefigure
+
+显然，\in{图}[fig:substitution]表示的字符替换关系不像凯撒密码那么有规律，明文字符和密文字符之间的映射看起来是
+无章可循的。可以说，凯撒密码是简单字符替换密码的一个特例。为了更好地展示明文字符和密文字符之间的替换关系，我们对
+\in{图}[fig:substitution]稍作转换，\in{图}[fig:substitution2]，但仍然保持字符之间原来的映射关系。
+
+\startplacefigure
+  [title={变换后的简单替换密码的映射表}, reference=fig:substitution2]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, minimum width=1.3em, minimum height=1.3em, font=\Tiny}]
+
+  \foreach \a/\n in {a/0, b/1, c/2, d/3, e/4, f/5, g/6, h/7, i/8, 
+    j/9, k/10, l/11, m/12, n/13, o/14, p/15, q/16, r/17, s/18,
+    t/19, u/20, v/21, w/22, x/23, y/24, z/25} {
+    \node (\a) at (\n * 5.2mm, 3) {\a};
+  }
+
+  \foreach \b/\n in {P/0, O/1, T/2, L/3, Q/4, K/5, V/6, C/7, N/8, 
+    Y/9, W/10, Z/11, U/12, B/13, A/14, G/15, M/16, S/17, F/18,
+    E/19, R/20, H/21, D/22, J/23, I/24, X/25} {
+    \node (\b) at (\n * 5.2mm, 0) {\b};
+  }
+
+  \foreach \a/\b in {a/P, c/T, b/O, e/Q, d/L, g/V, f/K, i/N, h/C,
+  k/W, j/Y, m/U, l/Z, o/A, n/B, q/M, p/G, s/F,
+  r/S, u/R, t/E, w/D, v/H, y/I, x/J, z/X} {
+    \draw [->,shorten >=1pt,>=stealth',semithick] (\a.south) -- (\b.north);
+  }
+\stoptikzpicture
+}
+\stopplacefigure
+
+凯撒密码可以用暴力破解来破译，但简单替换密码则不然。前面，我们提到，密码算法被破译的困难程度取决于密钥空间的大小。
+我们来看看简单替换密码的密钥空间。明文字母中的\type{a}可以对应\type{A, B, ..., Z}这26个字母中的任意一个
+（26种），\type{b}可以对应除了\type{a}所对应的字母以外的剩余25个字母中的任意一个（25种）。以此类推，我们可以
+计算出简单替换密码的密钥空间大小是：
+
+\startformula
+26 \times 25 \times 24 \times \cdots \times 1 = 403291461126605635584000000
+\stopformula
+
+这个数字约等于$400 \times 10^{24}$，密钥的数量如此巨大，用暴力破解进行穷举搜索就非常困难了。我们假设以当前
+（2018年11月）排名第一的Summit超级计算机在峰值性能下每秒约200亿次浮点计算的速度来遍历密钥的话，要遍历完所有
+的密钥也需要花费超过6千万年的时间。这还是用我们当前最顶级的超级计算机的峰值计算速度来遍历的，普通的家用计算机
+将要花费几百亿年的时间才能遍历完所有的密钥。由此可见，简单替换密码的密钥空间是足够大的。
+\stopsubsection
+
+\startsubsection[title={用频率分析的方法破解简单替换密码}]
+超大的密钥空间让破译简单替换密码看起来变得不可能，但密码破译工作者发现用频率分析的密码破译方法，使破译简单替换密码
+成为可能了。
+
+在任何一种书面语言中，不同的字母或字母组合出现的频率各不相同。而且，对于以这种语言写的任意一段文本，都具有大致相同
+的特征字母分布。比如，在英语中，字母\type{e}出现的频率很高，而\type{x}出现的较少。类似地，字母组合\type{st}、
+\type{ng}、\type{th}以及\type{qu}等双字母组合出现的频率非常高，\type{nz}、\type{qj}组合则极少。
+\in{表}[tab:freq]是人们从大量的英文文章中统计出的字母频率。
+
+\placetable
+  [here][tab:freq]
+  {英文字母出现的频率表}
+  \starttable[|c|c|c|c|]
+  \HL
+  \NC {\bf 字母} \NC {\bf 频率} \VL {\bf 字母} \NC {\bf 频率} \NC\SR
+  \HL
+  \NC e   \NC 11.1607\% \VL m   \NC 3.0129\% \NC\FR
+  \NC a   \NC  8.4966\% \VL h   \NC 3.0034\% \NC\MR
+  \NC r   \NC  7.5809\% \VL g   \NC 2.4705\% \NC\MR
+  \NC i   \NC  7.5448\% \VL b   \NC 2.0720\% \NC\MR
+  \NC o   \NC  7.1635\% \VL f   \NC 1.8121\% \NC\MR
+  \NC t   \NC  6.9509\% \VL y   \NC 1.7779\% \NC\MR
+  \NC n   \NC  6.6544\% \VL w   \NC 1.2899\% \NC\MR
+  \NC s   \NC  5.7351\% \VL k   \NC 1.1016\% \NC\MR
+  \NC l   \NC  5.4893\% \VL v   \NC 1.0074\% \NC\MR
+  \NC c   \NC  4.5388\% \VL x   \NC 0.2902\% \NC\MR
+  \NC u   \NC  3.6308\% \VL z   \NC 0.2722\% \NC\MR
+  \NC d   \NC  3.3844\% \VL j   \NC 0.1965\% \NC\MR
+  \NC p   \NC  3.1671\% \VL q   \NC 0.1962\% \NC\LR
+  \HL
+  \stoptable
+
+简单替换密码的密钥空间如此巨大，但它的弱点也是显而易见的，就是明文中相同的字母在转换为密文后总是被同一个字母所
+替换。我们参考这个英文字母频率表来实际尝试破译一段密文。现在，假设我们得到下面一段经过简单替换密码加密过后的
+密文，其明文都是小写英文字母。
+
+\starttyping
+EAOQASBAEEAOQECPENFECQMRQFENABDCQECQSENFBAOZQSNBECQUNBLEAFRKKQSECQFZNBVFPBLPSSADFAKAR
+ESPVQARFKASERBQASEAEPWQPSUFPVPNBFEPFQPAKESAROZQFPBLOIAGGAFNBVQBLECQUEALNQEAFZQQGBAUAS
+QPBLOIPFZQQGEAFPIDQQBLECQCQPSEPTCQPBLECQECARFPBLBPERSPZFCATWFECPEKZQFCNFCQNSEAENFPTAB
+FRUUPENABLQHAREZIEAOQDNFCLEALNQEAFZQQGEAFZQQGGQSTCPBTQEALSQPUPIECQSQFECQSROKASNBECPEF
+ZQQGAKLQPECDCPELSQPUFUPITAUQDCQBDQCPHQFCRKKZQLAKKECNFUASEPZTANZURFEVNHQRFGPRFQECQSQFE
+CQSQFGQTEECPEUPWQFTPZPUNEIAKFAZABVZNKQKASDCADARZLOQPSECQDCNGFPBLFTASBFAKENUQECAGGSQFF
+ASFDSABVECQGSARLUPBFTABERUQZIECQGPBVFAKLNFGSNXLZAHQECQZPDFLQZPIECQNBFAZQBTQAKAKKNTQPB
+LECQFGRSBFECPEGPENQBEUQSNEAKECRBDASECIEPWQFDCQBCQCNUFQZKUNVCECNFMRNQERFUPWQDNECPOPSQO
+ALWNBDCADARZLKPSLQZFOQPSEAVSRBEPBLFDQPERBLQSPDQPSIZNKQOREECPEECQLSQPLAKFAUQECNBVPKEQS
+LQPECECQRBLNFTAHQSQLTARBESIKSAUDCAFQOARSBBAESPHQZZQSSQERSBFGRXXZQFECQDNZZPBLUPWQFRFSP
+ECQSOQPSECAFQNZZFDQCPHQECPBKZIEAAECQSFECPEDQWBADBAEAKECRFTABFTNQBTQLAQFUPWQTADPSLFAKR
+FPZZPBLECRFECQBPENHQCRQAKSQFAZRENABNFFNTWZNQLAQSDNECECQGPZQTPFEAKECARVCEPBLQBEQSGSNFQ
+FAKVSQPEGNETCPBLUAUQBEDNECECNFSQVPSLECQNSTRSSQBEFERSBPDSIPBLZAFQECQBPUQAKPTENAB
+\stoptyping
+
+首先，我们统计这段密文中各个字母出现的次数和频率，结果如\in{表}[tab:chars-freq]所示。
+
+\placetable
+  [here][tab:chars-freq]
+  {密文中各英文字母出现的次数和频率}
+  \starttable[|c|c|c|c|c|c|]
+  \HL
+  \NC {\bf 字母} \NC {\bf 次数} \NC {\bf 频率} \VL {\bf 字母} \NC {\bf 次数} \NC {\bf 频率} \NC\SR
+  \HL
+  \NC Q   \NC 137  \NC 12.47\% \VL K   \NC 34 \NC 3.09\% \NC\FR
+  \NC E   \NC 117  \NC 10.65\% \VL D   \NC 28 \NC 2.55\% \NC\MR
+  \NC A   \NC 93   \NC  8.46\% \VL U   \NC 28 \NC 2.55\% \NC\MR
+  \NC P   \NC 84   \NC  7.64\% \VL T   \NC 24 \NC 2.18\% \NC\MR
+  \NC F   \NC 82   \NC  7.46\% \VL G   \NC 22 \NC 2.00\% \NC\MR
+  \NC C   \NC 75   \NC  6.82\% \VL O   \NC 15 \NC 1.36\% \NC\MR
+  \NC S   \NC 68   \NC  6.19\% \VL I   \NC 14 \NC 1.27\% \NC\MR
+  \NC B   \NC 65   \NC  5.91\% \VL V   \NC 14 \NC 1.27\% \NC\MR
+  \NC N   \NC 53   \NC  4.82\% \VL W   \NC 10 \NC 0.91\% \NC\MR
+  \NC L   \NC 42   \NC  3.82\% \VL H   \NC 8  \NC 0.73\% \NC\MR
+  \NC Z   \NC 41   \NC  3.73\% \VL X   \NC 3  \NC 0.27\% \NC\MR
+  \NC R   \NC 40   \NC  3.64\% \VL M   \NC 2  \NC 0.18\% \NC\LR
+  \HL
+  \stoptable
+
+根据密码研究工作者总结出来的字母频率\in{表}[tab:freq]，字母\type{e}的出现频率远高于其他字母。
+经统计后，我们发现密文中字母\type{Q}的出现频率最高。我们先暂且假设字母\type{Q}就是由\type{e}变换
+而来的，这样，我们把密文中的\type{Q}替换回\type{e}，就得到下面的字母序列。
+
+\starttyping
+EAOeASBAEEAOeECPENFECeMReFENABDCeECeSENFBAOZeSNBECeUNBLEAFRKKeSECeFZNBVFPBLPSSADFAKAR
+ESPVeARFKASERBeASEAEPWePSUFPVPNBFEPFePAKESAROZeFPBLOIAGGAFNBVeBLECeUEALNeEAFZeeGBAUAS
+ePBLOIPFZeeGEAFPIDeeBLECeCePSEPTCePBLECeECARFPBLBPERSPZFCATWFECPEKZeFCNFCeNSEAENFPTAB
+FRUUPENABLeHAREZIEAOeDNFCLEALNeEAFZeeGEAFZeeGGeSTCPBTeEALSePUPIECeSeFECeSROKASNBECPEF
+ZeeGAKLePECDCPELSePUFUPITAUeDCeBDeCPHeFCRKKZeLAKKECNFUASEPZTANZURFEVNHeRFGPRFeECeSeFE
+CeSeFGeTEECPEUPWeFTPZPUNEIAKFAZABVZNKeKASDCADARZLOePSECeDCNGFPBLFTASBFAKENUeECAGGSeFF
+ASFDSABVECeGSARLUPBFTABERUeZIECeGPBVFAKLNFGSNXLZAHeECeZPDFLeZPIECeNBFAZeBTeAKAKKNTePB
+LECeFGRSBFECPEGPENeBEUeSNEAKECRBDASECIEPWeFDCeBCeCNUFeZKUNVCECNFMRNeERFUPWeDNECPOPSeO
+ALWNBDCADARZLKPSLeZFOePSEAVSRBEPBLFDePERBLeSPDePSIZNKeOREECPEECeLSePLAKFAUeECNBVPKEeS
+LePECECeRBLNFTAHeSeLTARBESIKSAUDCAFeOARSBBAESPHeZZeSSeERSBFGRXXZeFECeDNZZPBLUPWeFRFSP
+ECeSOePSECAFeNZZFDeCPHeECPBKZIEAAECeSFECPEDeWBADBAEAKECRFTABFTNeBTeLAeFUPWeTADPSLFAKR
+FPZZPBLECRFECeBPENHeCReAKSeFAZRENABNFFNTWZNeLAeSDNECECeGPZeTPFEAKECARVCEPBLeBEeSGSNFe
+FAKVSePEGNETCPBLUAUeBEDNECECNFSeVPSLECeNSTRSSeBEFERSBPDSIPBLZAFeECeBPUeAKPTENAB
+\stoptyping
+
+
+英文文章中，以字母\type{e}结尾的单词，\type{the}的出现频率极高，对上面的这段字符序列，进一步统计
+发现\type{ECe}出现了27次，远远高于其他以\type{e}结尾的包含3个字母的字符串的出现次数。我们进一步
+假定\type{t}被替换成了\type{E}，\type{h}被替换成了\type{C}，于是，我们继续将上面字符序列
+中\type{E}和\type{C}分别替换回\type{t}和\type{h}，得到：
+
+\starttyping
+tAOeASBAttAOethPtNFtheMReFtNABDhetheStNFBAOZeSNBtheUNBLtAFRKKeStheFZNBVFPBLPSSADFAKAR
+tSPVeARFKAStRBeAStAtPWePSUFPVPNBFtPFePAKtSAROZeFPBLOIAGGAFNBVeBLtheUtALNetAFZeeGBAUAS
+ePBLOIPFZeeGtAFPIDeeBLthehePStPThePBLthethARFPBLBPtRSPZFhATWFthPtKZeFhNFheNStAtNFPTAB
+FRUUPtNABLeHARtZItAOeDNFhLtALNetAFZeeGtAFZeeGGeSThPBTetALSePUPItheSeFtheSROKASNBthPtF
+ZeeGAKLePthDhPtLSePUFUPITAUeDheBDehPHeFhRKKZeLAKKthNFUAStPZTANZURFtVNHeRFGPRFetheSeFt
+heSeFGeTtthPtUPWeFTPZPUNtIAKFAZABVZNKeKASDhADARZLOePStheDhNGFPBLFTASBFAKtNUethAGGSeFF
+ASFDSABVtheGSARLUPBFTABtRUeZItheGPBVFAKLNFGSNXLZAHetheZPDFLeZPItheNBFAZeBTeAKAKKNTePB
+LtheFGRSBFthPtGPtNeBtUeSNtAKthRBDASthItPWeFDheBhehNUFeZKUNVhthNFMRNetRFUPWeDNthPOPSeO
+ALWNBDhADARZLKPSLeZFOePStAVSRBtPBLFDePtRBLeSPDePSIZNKeORtthPttheLSePLAKFAUethNBVPKteS
+LePththeRBLNFTAHeSeLTARBtSIKSAUDhAFeOARSBBAtSPHeZZeSSetRSBFGRXXZeFtheDNZZPBLUPWeFRFSP
+theSOePSthAFeNZZFDehPHethPBKZItAAtheSFthPtDeWBADBAtAKthRFTABFTNeBTeLAeFUPWeTADPSLFAKR
+FPZZPBLthRFtheBPtNHehReAKSeFAZRtNABNFFNTWZNeLAeSDNththeGPZeTPFtAKthARVhtPBLeBteSGSNFe
+FAKVSePtGNtThPBLUAUeBtDNththNFSeVPSLtheNSTRSSeBtFtRSBPDSIPBLZAFetheBPUeAKPTtNAB
+\stoptyping
+
+进一步分析，我们发现\type{thPt}也多次出现，英文中单词\type{that}出现的频率也是特别高的。同时，我们
+发现\type{P}在这段密文中出现的频率也是极高的，我们几乎可以不假思索地猜测\type{a}被替换成了\type{P}。
+把\type{P}替换回\type{a}，我们得到：
+
+\starttyping
+tAOeASBAttAOethatNFtheMReFtNABDhetheStNFBAOZeSNBtheUNBLtAFRKKeStheFZNBVFaBLaSSADFAKAR
+tSaVeARFKAStRBeAStAtaWeaSUFaVaNBFtaFeaAKtSAROZeFaBLOIAGGAFNBVeBLtheUtALNetAFZeeGBAUAS
+eaBLOIaFZeeGtAFaIDeeBLtheheaStaTheaBLthethARFaBLBatRSaZFhATWFthatKZeFhNFheNStAtNFaTAB
+FRUUatNABLeHARtZItAOeDNFhLtALNetAFZeeGtAFZeeGGeSThaBTetALSeaUaItheSeFtheSROKASNBthatF
+ZeeGAKLeathDhatLSeaUFUaITAUeDheBDehaHeFhRKKZeLAKKthNFUAStaZTANZURFtVNHeRFGaRFetheSeFt
+heSeFGeTtthatUaWeFTaZaUNtIAKFAZABVZNKeKASDhADARZLOeaStheDhNGFaBLFTASBFAKtNUethAGGSeFF
+ASFDSABVtheGSARLUaBFTABtRUeZItheGaBVFAKLNFGSNXLZAHetheZaDFLeZaItheNBFAZeBTeAKAKKNTeaB
+LtheFGRSBFthatGatNeBtUeSNtAKthRBDASthItaWeFDheBhehNUFeZKUNVhthNFMRNetRFUaWeDNthaOaSeO
+ALWNBDhADARZLKaSLeZFOeaStAVSRBtaBLFDeatRBLeSaDeaSIZNKeORtthattheLSeaLAKFAUethNBVaKteS
+LeaththeRBLNFTAHeSeLTARBtSIKSAUDhAFeOARSBBAtSaHeZZeSSetRSBFGRXXZeFtheDNZZaBLUaWeFRFSa
+theSOeaSthAFeNZZFDehaHethaBKZItAAtheSFthatDeWBADBAtAKthRFTABFTNeBTeLAeFUaWeTADaSLFAKR
+FaZZaBLthRFtheBatNHehReAKSeFAZRtNABNFFNTWZNeLAeSDNththeGaZeTaFtAKthARVhtaBLeBteSGSNFe
+FAKVSeatGNtThaBLUAUeBtDNththNFSeVaSLtheNSTRSSeBtFtRSBaDSIaBLZAFetheBaUeAKaTtNAB
+\stoptyping
+
+继续猜测，\type{theSe}会不会是\type{there}呢，\type{Leath}会不会是\type{death}呢，于是，我们
+用\type{r}和\type{d}分别替换回\type{S}和\type{L}，得到：
+
+\starttyping
+tAOeArBAttAOethatNFtheMReFtNABDhethertNFBAOZerNBtheUNBdtAFRKKertheFZNBVFaBdarrADFAKAR
+traVeARFKArtRBeArtAtaWearUFaVaNBFtaFeaAKtrAROZeFaBdOIAGGAFNBVeBdtheUtAdNetAFZeeGBAUAr
+eaBdOIaFZeeGtAFaIDeeBdtheheartaTheaBdthethARFaBdBatRraZFhATWFthatKZeFhNFheNrtAtNFaTAB
+FRUUatNABdeHARtZItAOeDNFhdtAdNetAFZeeGtAFZeeGGerThaBTetAdreaUaIthereFtherROKArNBthatF
+ZeeGAKdeathDhatdreaUFUaITAUeDheBDehaHeFhRKKZedAKKthNFUArtaZTANZURFtVNHeRFGaRFethereFt
+hereFGeTtthatUaWeFTaZaUNtIAKFAZABVZNKeKArDhADARZdOeartheDhNGFaBdFTArBFAKtNUethAGGreFF
+ArFDrABVtheGrARdUaBFTABtRUeZItheGaBVFAKdNFGrNXdZAHetheZaDFdeZaItheNBFAZeBTeAKAKKNTeaB
+dtheFGRrBFthatGatNeBtUerNtAKthRBDArthItaWeFDheBhehNUFeZKUNVhthNFMRNetRFUaWeDNthaOareO
+AdWNBDhADARZdKardeZFOeartAVrRBtaBdFDeatRBderaDearIZNKeORtthatthedreadAKFAUethNBVaKter
+deaththeRBdNFTAHeredTARBtrIKrAUDhAFeOARrBBAtraHeZZerretRrBFGRXXZeFtheDNZZaBdUaWeFRFra
+therOearthAFeNZZFDehaHethaBKZItAAtherFthatDeWBADBAtAKthRFTABFTNeBTedAeFUaWeTADardFAKR
+FaZZaBdthRFtheBatNHehReAKreFAZRtNABNFFNTWZNedAerDNththeGaZeTaFtAKthARVhtaBdeBterGrNFe
+FAKVreatGNtThaBdUAUeBtDNththNFreVardtheNrTRrreBtFtRrBaDrIaBdZAFetheBaUeAKaTtNAB
+\stoptyping
+
+结合\type{Dhether}和\type{Dhat}，我们推测\type{D}是由\type{w}替换过来的。进一步，
+\type{DNth}极有可能就是\type{with}，以此类推，\type{DNZZ}可能是\type{will}，\type{NF}可能
+是\type{is}。用\type{w}、\type{i}和\type{l}分别替换\type{D}、\type{N}和\type{Z}，得到：
+
+\starttyping
+tAOeArBAttAOethatiFtheMReFtiABwhethertiFBAOleriBtheUiBdtAFRKKertheFliBVFaBdarrAwFAKAR
+traVeARFKArtRBeArtAtaWearUFaVaiBFtaFeaAKtrAROleFaBdOIAGGAFiBVeBdtheUtAdietAFleeGBAUAr
+eaBdOIaFleeGtAFaIweeBdtheheartaTheaBdthethARFaBdBatRralFhATWFthatKleFhiFheirtAtiFaTAB
+FRUUatiABdeHARtlItAOewiFhdtAdietAFleeGtAFleeGGerThaBTetAdreaUaIthereFtherROKAriBthatF
+leeGAKdeathwhatdreaUFUaITAUewheBwehaHeFhRKKledAKKthiFUArtalTAilURFtViHeRFGaRFethereFt
+hereFGeTtthatUaWeFTalaUitIAKFAlABVliKeKArwhAwARldOearthewhiGFaBdFTArBFAKtiUethAGGreFF
+ArFwrABVtheGrARdUaBFTABtRUelItheGaBVFAKdiFGriXdlAHethelawFdelaItheiBFAleBTeAKAKKiTeaB
+dtheFGRrBFthatGatieBtUeritAKthRBwArthItaWeFwheBhehiUFelKUiVhthiFMRietRFUaWewithaOareO
+AdWiBwhAwARldKardelFOeartAVrRBtaBdFweatRBderawearIliKeORtthatthedreadAKFAUethiBVaKter
+deaththeRBdiFTAHeredTARBtrIKrAUwhAFeOARrBBAtraHellerretRrBFGRXXleFthewillaBdUaWeFRFra
+therOearthAFeillFwehaHethaBKlItAAtherFthatweWBAwBAtAKthRFTABFTieBTedAeFUaWeTAwardFAKR
+FallaBdthRFtheBatiHehReAKreFAlRtiABiFFiTWliedAerwiththeGaleTaFtAKthARVhtaBdeBterGriFe
+FAKVreatGitThaBdUAUeBtwiththiFreVardtheirTRrreBtFtRrBawrIaBdlAFetheBaUeAKaTtiAB
+\stoptyping
+
+靠近句尾的地方出现了\type{withthisreVard}，这个可能是\type{with this regard}，也可能
+是\type{with this reward}。但是我们可以立即排除后者，因为我们在上一步已经推测了\type{D}是
+由\type{w}替换过来的，所以，我们推测\type{V}是由\type{g}替换过来的。现在，我们把已经推测出来的字母放到
+\in{表}[tab:chars-freq1]中，如\in{表}[tab:chars-freq1]所示。
+
+\placetable
+  [here][tab:chars-freq1]
+  {使用频率分析方法已经推测出来的字母}
+  \starttable[|c|c|c|c|c|c|]
+  \HL
+  \NC {\bf 字母} \NC {\bf 次数} \NC {\bf 频率} \VL {\bf 字母} \NC {\bf 次数} \NC {\bf 频率} \NC\SR
+  \HL
+  \NC Q $<-$ e \NC 137  \NC 12.47\% \VL K        \NC 34 \NC 3.09\% \NC\FR
+  \NC E $<-$ t \NC 117  \NC 10.65\% \VL D $<-$ w \NC 28 \NC 2.55\% \NC\MR
+  \NC A        \NC 93   \NC  8.46\% \VL U        \NC 28 \NC 2.55\% \NC\MR
+  \NC P $<-$ a \NC 84   \NC  7.64\% \VL T        \NC 24 \NC 2.18\% \NC\MR
+  \NC F $<-$ s \NC 82   \NC  7.46\% \VL G        \NC 22 \NC 2.00\% \NC\MR
+  \NC C $<-$ h \NC 75   \NC  6.82\% \VL O        \NC 15 \NC 1.36\% \NC\MR
+  \NC S $<-$ r \NC 68   \NC  6.19\% \VL I        \NC 14 \NC 1.27\% \NC\MR
+  \NC B        \NC 65   \NC  5.91\% \VL V        \NC 14 \NC 1.27\% \NC\MR
+  \NC N $<-$ i \NC 53   \NC  4.82\% \VL W        \NC 10 \NC 0.91\% \NC\MR
+  \NC L $<-$ d \NC 42   \NC  3.82\% \VL H        \NC 8  \NC 0.73\% \NC\MR
+  \NC Z $<-$ l \NC 41   \NC  3.73\% \VL X        \NC 3  \NC 0.27\% \NC\MR
+  \NC R        \NC 40   \NC  3.64\% \VL M        \NC 2  \NC 0.18\% \NC\LR
+  \HL
+  \stoptable
+
+到此为止，排在前五的高频字母只剩下\type{A}还没有推测出来，那我们对照字母频率\in{表}[tab:freq]，发现高频
+字母中只有\type{o}和\type{n}还没有被反推出来。我们大胆地假设，\type{A}就是由\type{o}或者\type{n}替换
+过来的，然后，我们通过\type{whA}很快排除\type{n}，所以，我们推测\type{A}是由\type{o}替换过来的，继续
+还原字母序列，我们得到：
+
+\starttyping
+toOeorBottoOethatiFtheMReFtioBwhethertiFBoOleriBtheUiBdtoFRKKertheFliBgFaBdarrowFoKoR
+trageoRFKortRBeortotaWearUFagaiBFtaFeaoKtroROleFaBdOIoGGoFiBgeBdtheUtodietoFleeGBoUor
+eaBdOIaFleeGtoFaIweeBdtheheartaTheaBdthethoRFaBdBatRralFhoTWFthatKleFhiFheirtotiFaToB
+FRUUatioBdeHoRtlItoOewiFhdtodietoFleeGtoFleeGGerThaBTetodreaUaIthereFtherROKoriBthatF
+leeGoKdeathwhatdreaUFUaIToUewheBwehaHeFhRKKledoKKthiFUortalToilURFtgiHeRFGaRFethereFt
+hereFGeTtthatUaWeFTalaUitIoKFoloBgliKeKorwhowoRldOearthewhiGFaBdFTorBFoKtiUethoGGreFF
+orFwroBgtheGroRdUaBFToBtRUelItheGaBgFoKdiFGriXdloHethelawFdelaItheiBFoleBTeoKoKKiTeaB
+dtheFGRrBFthatGatieBtUeritoKthRBworthItaWeFwheBhehiUFelKUighthiFMRietRFUaWewithaOareO
+odWiBwhowoRldKardelFOeartogrRBtaBdFweatRBderawearIliKeORtthatthedreadoKFoUethiBgaKter
+deaththeRBdiFToHeredToRBtrIKroUwhoFeOoRrBBotraHellerretRrBFGRXXleFthewillaBdUaWeFRFra
+therOearthoFeillFwehaHethaBKlItootherFthatweWBowBotoKthRFToBFTieBTedoeFUaWeTowardFoKR
+FallaBdthRFtheBatiHehReoKreFolRtioBiFFiTWliedoerwiththeGaleTaFtoKthoRghtaBdeBterGriFe
+FoKgreatGitThaBdUoUeBtwiththiFregardtheirTRrreBtFtRrBawrIaBdloFetheBaUeoKaTtioB
+\stoptyping
+
+接下来，我们发现开头几个单词的组合\type{toOeorBottoOethatistheMRestioB}，这大概
+是\type{to be or not to be that is the question}吧，其中，\type{b}$->$\type{O}，
+\type{n}$->$\type{B}，\type{q}$->$\type{M}，\type{u}$->$\type{R}。进一步将这些字母替换
+进去，得到：
+
+\starttyping
+tobeornottobethatiFthequeFtionwhethertiFnoblerintheUindtoFuKKertheFlingFandarrowFoKou
+trageouFKortuneortotaWearUFagainFtaFeaoKtroubleFandbIoGGoFingendtheUtodietoFleeGnoUor
+eandbIaFleeGtoFaIweendtheheartaTheandthethouFandnaturalFhoTWFthatKleFhiFheirtotiFaTon
+FuUUationdeHoutlItobewiFhdtodietoFleeGtoFleeGGerThanTetodreaUaIthereFtherubKorinthatF
+leeGoKdeathwhatdreaUFUaIToUewhenwehaHeFhuKKledoKKthiFUortalToilUuFtgiHeuFGauFethereFt
+hereFGeTtthatUaWeFTalaUitIoKFolongliKeKorwhowouldbearthewhiGFandFTornFoKtiUethoGGreFF
+orFwrongtheGroudUanFTontuUelItheGangFoKdiFGriXdloHethelawFdelaItheinFolenTeoKoKKiTean
+dtheFGurnFthatGatientUeritoKthunworthItaWeFwhenhehiUFelKUighthiFquietuFUaWewithabareb
+odWinwhowouldKardelFbeartogruntandFweatunderawearIliKebutthatthedreadoKFoUethingaKter
+deaththeundiFToHeredTountrIKroUwhoFebournnotraHellerreturnFGuXXleFthewillandUaWeFuFra
+therbearthoFeillFwehaHethanKlItootherFthatweWnownotoKthuFTonFTienTedoeFUaWeTowardFoKu
+FallandthuFthenatiHehueoKreFolutioniFFiTWliedoerwiththeGaleTaFtoKthoughtandenterGriFe
+FoKgreatGitThandUoUentwiththiFregardtheirTurrentFturnawrIandloFethenaUeoKaTtion
+\stoptyping
+
+至此，我们的破译工作基本结束。我们基本上可以确定这段密文就是莎士比亚名著《哈姆雷特》中关于“生存和毁灭”
+的名段了。我们把原著和现在已经部分破译好的字母序列对比，就能确定所有字母的替换关系
+如\in{图}[fig:crack-sub]所示。
+
+\startplacefigure
+  [title={变换后的简单替换密码的映射表}, reference=fig:crack-sub]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, minimum width=1.3em, minimum height=1.3em, font=\Tiny}]
+
+  \foreach \a/\n in {a/0, b/1, c/2, d/3, e/4, f/5, g/6, h/7, i/8, 
+    j/9, k/10, l/11, m/12, n/13, o/14, p/15, q/16, r/17, s/18,
+    t/19, u/20, v/21, w/22, x/23, y/24, z/25} {
+    \node (\a) at (\n * 5.2mm, 3) {\a};
+  }
+
+  \foreach \b/\n in {P/0, O/1, T/2, L/3, Q/4, K/5, V/6, C/7, N/8, 
+    Y/9, W/10, Z/11, U/12, B/13, A/14, G/15, M/16, S/17, F/18,
+    E/19, R/20, H/21, D/22, J/23, I/24, X/25} {
+    \node (\b) at (\n * 5.2mm, 0) {\b};
+  }
+
+  \foreach \a/\b in {a/P, c/T, b/O, e/Q, d/L, g/V, f/K, i/N, h/C,
+  k/W, j/Y, m/U, l/Z, o/A, n/B, q/M, p/G, s/F,
+  r/S, u/R, t/E, w/D, v/H, y/I, x/J, z/X} {
+    \draw [->,shorten >=1pt,>=stealth',semithick] (\a.south) -- (\b.north);
+  }
+\stoptikzpicture
+}
+\stopplacefigure
+
+\stopsection
+
+明文如下：
+\starttyping
+tobeornottobethatisthequestionwhethertisnoblerinthemindtosuffertheslingsandarrowsofou
+trageousfortuneortotakearmsagainstaseaoftroublesandbyopposingendthemtodietosleepnomor
+eandbyasleeptosayweendtheheartacheandthethousandnaturalshocksthatfleshisheirtotisacon
+summationdevoutlytobewishdtodietosleeptosleepperchancetodreamaytherestherubforinthats
+leepofdeathwhatdreamsmaycomewhenwehaveshuffledoffthismortalcoilmustgiveuspausetherest
+herespectthatmakescalamityofsolonglifeforwhowouldbearthewhipsandscornsoftimethoppress
+orswrongtheproudmanscontumelythepangsofdisprizdlovethelawsdelaytheinsolenceofofficean
+dthespurnsthatpatientmeritofthunworthytakeswhenhehimselfmighthisquietusmakewithabareb
+odkinwhowouldfardelsbeartogruntandsweatunderawearylifebutthatthedreadofsomethingafter
+deaththeundiscoveredcountryfromwhosebournnotravellerreturnspuzzlesthewillandmakesusra
+therbearthoseillswehavethanflytoothersthatweknownotofthusconsciencedoesmakecowardsofu
+sallandthusthenativehueofresolutionissickliedoerwiththepalecastofthoughtandenterprise
+sofgreatpitchandmomentwiththisregardtheircurrentsturnawryandlosethenameofaction
+\stoptyping
+
+给明文补上空格和标点符号并断句之后，可读性就更好了：
+
+\startalignment[middle]
+\starttyping
+To be, or not to be, that is the question:
+Whether 'tis nobler in the mind to suffer
+The slings and arrows of outrageous fortune,
+Or to take arms against a sea of troubles
+And by opposing end them. To die-to sleep,
+No more; and by a sleep to say we end
+The heart-ache and the thousand natural shocks
+That flesh is heir to: 'tis a consummation
+Devoutly to be wish'd. To die, to sleep;
+To sleep, perchance to dream-ay, there's the rub:
+For in that sleep of death what dreams may come,
+When we have shuffled off this mortal coil,
+Must give us pause-there's the respect
+That makes calamity of so long life.
+For who would bear the whips and scorns of time,
+Th'oppressor's wrong, the proud man's contumely,
+The pangs of dispriz'd love, the law's delay,
+The insolence of office, and the spurns
+That patient merit of th'unworthy takes,
+When he himself might his quietus make
+With a bare bodkin? Who would fardels bear,
+To grunt and sweat under a weary life,
+But that the dread of something after death,
+The undiscovere'd country, from whose bourn
+No traveller returns, puzzles the will,
+And makes us rather bear those ills we have
+Than fly to others that we know not of?
+Thus conscience does make cowards of us all,
+And thus the native hue of resolution
+Is sicklied o'er with the pale cast of thought,
+And enterprises of great pitch and moment
+With this regard their currents turn awry
+And lose the name of action.
+\stoptyping
+\stopalignment
+
+通过上述破解过程，我们可以了解到利用频率分析破译简单替换密码可以从高频字母着手，同时利用高频单词查找线索。
+常用的词组也可能成为线索，同时密文越长越容易破解，因为长密文统计出来的字母频率表更接近密码工作研究者们总结
+出来的字母频率表。
+
+早在公元九世纪，阿拉伯的密码破译专家就已经能够娴熟地运用统计字母出现频率的方法来破译简单替换密码，柯南·道尔在
+他著名的福尔摩斯探案《跳舞的小人》里就非常详细地叙述了福尔摩斯使用频率统计法破译跳舞人形密码（也就是简单替换
+密码）的过程。
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startsection[title={复式替换密码：Enigma}]
+\index{enigma}
+
+Enigma是对二战时期纳粹德国使用的一系列相似的转子机械加解密机器的统称，它包括了许多不同的型号，为密码学对称
+加密算法的流加密。
+
+% \startplacefigure
+% [title={Engima}, reference=fig:enigma]
+% \startcombination[3*1]
+% {\externalfigure[enigma][type=jpg,height=4cm]}{\Tiny Engima加密机}
+% {\externalfigure[rotor][type=jpg,height=4cm]}{\Tiny 转子}
+% {\externalfigure[enigma-in-use][type=jpg,height=4cm]}{\Tiny 德军在法国战场使用Engima加密文件}
+% \stopplacefigure
+
+键盘一共有26个键，键盘排列和广为使用的计算机键盘基本一样，只不过为了使通讯尽量地短和难以破译，空格、数字和标点
+符号都被取消，而只有字母键。键盘上方就是显示器，这可不是现今的计算机屏幕显示器，只不过是标示了同样字母的26个小
+灯泡，当键盘上的某个键被按下时，和这个字母被加密后的密文字母所对应的小灯泡就亮了起来，就是这样一种近乎原始的
+“显示”。在显示器的上方是三个直径6厘米的转子 (Rotor)，它们的主要部分隐藏在面板下，转子才是Enigma密码机最核心
+关键的部分。如果转子的作用仅仅是把一个字母换成另一个字母，那就是等同于我们前一节介绍的简单替换密码。转子的巧妙
+之处在于它会转，当按下键盘上的一个字母键，相应加密后的字母在显示器上通过灯泡闪亮来显示，而转子就自动地转动
+一个字母的位置。举例来说，当第一次键入\type{A}，灯泡\type{B}亮，转子转动一格，各字母所对应的密码就改变了。
+第二次再键入\type{A}时，它所对应的字母就可能变成了\type{C}；同样地，第三次键入\type{A}时，又可能是
+灯泡\type{D}亮了。这就是Enigma难以被破译的关键所在，这不是一种简单替换密码。同一个字母在明文的不同位置时，
+可以被不同的字母替换，而密文中不同位置的同一个字母，又可以代表明文中的不同字母，字母频率分析法在这里丝毫无
+用武之地了。这种加密方式在密码学上被称为{\it 复式替换密码}。
+
+
+但是如果连续键入26个字母，转子就会整整转一圈，回到原始的方向上，这时编码就和最初重复了。而在加密过程中，重复的
+现象就很是最大的破绽，因为这可以使破译密码的人从中发现规律。于是Enigma又增加了一个转子，当第一个转子转动整整
+一圈以后，它上面有一个齿轮拨动第二个转子，使得它的方向转动一个字母的位置。假设第一个转子已经整整转了一圈，
+按\type{A}键时显示器上\type{D}灯泡亮；当放开\type{A}键时，第一个转子上的齿轮也带动第二个转子同时转动一格，
+于是再次键入\type{A}时，加密的字母可能为\type{E}；再次放开键A时，就只有第一个转子转动了，于是第三次键入
+\type{A}时，与之相对应的就是字母就可能是\type{F}了。因此只有在$26 \times 26=676$个字母后才会重复原来的编码。
+而事实上Enigma有三个转子（二战后期德国海军使用的Enigma甚至有四个转子！），那么重复的概率就达到
+$26 \times 26 \times 26 = 17576$个字母之后。
+
+
+
+
+在此基础上谢尔比乌斯十分巧妙地在三个转子的一端加上了一个反射器，
+把键盘和显示器中的相同字母用电线连在一起。反射器和转子一样，把某一个字母连在另一个字母上，但是它并不转动。乍一看这么一个固定的反射器好像没什么用处，它并不增加可以使用的编码数目，但是把它和解码联系起来就会看出这种设计的别具匠心了。当一个键被按下时，信号不是直接从键盘传到显示器，而是首先通过三个转子连成的一条线路，然后经过反射器再回到三个转子，通过另一条线路再到达显示器上，比如说上图中A键被按下时，亮的是D灯泡。如果这时按的不是A键而是D键，那么信号恰好按照上面A键被按下时的相反方向通行，最后到达A灯泡。换句话说，在这种设计下，反射器虽然没有像转子那样增加不重复的方向，但是它可以使解码过程完全重现编码过程。
+
+
+https://en.wikipedia.org/wiki/Enigma_machine
+
+\stopsection
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startsection[title={本章小结}]
+\index{summary}
+
+\stopsection
+
+\stopchapter
+
+\stopcomponent
+
+
+
+% https://www.sohu.com/a/192352784_490113
