@@ -251,7 +251,7 @@ k = 25: FUBSWRJUDSKB => GVCTXSKVETLC
 字符之间的映射关系，我们把明文中的字符都用小写字母表示，密文中的字符都用大写字母表示。\in{图}[fig:substitution]
 就是一个简单的字符替换表。
 
-% python dict: {'a': 'P', 'c': 'T', 'b': 'O', 'e': 'Q', 'd': 'L', 'g': 'V', 'f': 'K', 'i': 'N', 'h': 'C', 'k': 'W', 'j': 'Y', 'm': 'U', 'l': 'Z', 'o': 'A', 'n': 'B', 'q': 'M', 'p': 'G', 's': 'F', 'r': 'S', 'u': 'R', 't': 'E', 'w': 'D', 'v': 'H', 'y': 'I', 'x': 'J', 'z': 'X'}
+% OrderedDict([('a', 'D'), ('b', 'H'), ('c', 'V'), ('d', 'E'), ('e', 'J'), ('f', 'P'), ('g', 'O'), ('h', 'Y'), ('i', 'T'), ('j', 'R'), ('k', 'U'), ('l', 'Q'), ('m', 'C'), ('n', 'G'), ('o', 'W'), ('p', 'L'), ('q', 'A'), ('r', 'Z'), ('s', 'K'), ('t', 'N'), ('u', 'S'), ('v', 'B'), ('w', 'F'), ('x', 'I'), ('y', 'X'), ('z', 'M')])
 \startplacefigure
   [title={简单替换密码的映射表}, reference=fig:substitution]
 
@@ -273,9 +273,9 @@ k = 25: FUBSWRJUDSKB => GVCTXSKVETLC
     \node (\b) at (\n * 5.2mm, 0) {\b};
   }
 
-  \foreach \a/\b in {a/P, c/T, b/O, e/Q, d/L, g/V, f/K, i/N, h/C,
-  k/W, j/Y, m/U, l/Z, o/A, n/B, q/M, p/G, s/F,
-  r/S, u/R, t/E, w/D, v/H, y/I, x/J, z/X} {
+  \foreach \a/\b in {a/D, b/H, c/V, d/E, e/J, f/P, g/O, h/Y, i/T,
+    j/R, k/U, l/Q, m/C, n/G, o/W, p/L, q/A, r/Z, s/K, t/N, u/S,
+    v/B, w/F, x/I, y/X, z/M} {
     \draw [->,shorten >=1pt,>=stealth',semithick] (\a.south) -- (\b.north);
   }
 \stoptikzpicture
@@ -301,15 +301,15 @@ k = 25: FUBSWRJUDSKB => GVCTXSKVETLC
     \node (\a) at (\n * 5.2mm, 3) {\a};
   }
 
-  \foreach \b/\n in {P/0, O/1, T/2, L/3, Q/4, K/5, V/6, C/7, N/8, 
-    Y/9, W/10, Z/11, U/12, B/13, A/14, G/15, M/16, S/17, F/18,
-    E/19, R/20, H/21, D/22, J/23, I/24, X/25} {
+  \foreach \b/\n in {D/0, H/1, V/2, E/3, J/4, P/5, O/6, Y/7, T/8, 
+    R/9, U/10, Q/11, C/12, G/13, W/14, L/15, A/16, Z/17, K/18,
+    N/19, S/20, B/21, F/22, I/23, X/24, M/25} {
     \node (\b) at (\n * 5.2mm, 0) {\b};
   }
 
-  \foreach \a/\b in {a/P, c/T, b/O, e/Q, d/L, g/V, f/K, i/N, h/C,
-  k/W, j/Y, m/U, l/Z, o/A, n/B, q/M, p/G, s/F,
-  r/S, u/R, t/E, w/D, v/H, y/I, x/J, z/X} {
+  \foreach \a/\b in {a/D, b/H, c/V, d/E, e/J, f/P, g/O, h/Y, i/T,
+    j/R, k/U, l/Q, m/C, n/G, o/W, p/L, q/A, r/Z, s/K, t/N, u/S,
+    v/B, w/F, x/I, y/X, z/M} {
     \draw [->,shorten >=1pt,>=stealth',semithick] (\a.south) -- (\b.north);
   }
 \stoptikzpicture
@@ -581,6 +581,7 @@ FoKgreatGitThandUoUentwiththiFregardtheirTurrentFturnawrIandloFethenaUeoKaTtion
 的名段了。我们把原著和现在已经部分破译好的字母序列对比，就能确定所有字母的替换关系
 如\in{图}[fig:crack-sub]所示。
 
+% python dict: {'a': 'P', 'c': 'T', 'b': 'O', 'e': 'Q', 'd': 'L', 'g': 'V', 'f': 'K', 'i': 'N', 'h': 'C', 'k': 'W', 'j': 'Y', 'm': 'U', 'l': 'Z', 'o': 'A', 'n': 'B', 'q': 'M', 'p': 'G', 's': 'F', 'r': 'S', 'u': 'R', 't': 'E', 'w': 'D', 'v': 'H', 'y': 'I', 'x': 'J', 'z': 'X'}
 \startplacefigure
   [title={变换后的简单替换密码的映射表}, reference=fig:crack-sub]
 
@@ -683,47 +684,540 @@ And lose the name of action.
 \startsection[title={复式替换密码：Enigma}]
 \index{enigma}
 
-Enigma是对二战时期纳粹德国使用的一系列相似的转子机械加解密机器的统称，它包括了许多不同的型号，为密码学对称
-加密算法的流加密。
+Enigma这个名字在德语里是“谜”的意思，它是由德国人阿瑟·谢尔比乌斯 (Arthur Sherbius) 发明的一种能够进行
+加密和解密操作的机器。在刚刚发明之际，Enigma被用在商业用途，后来到了第二次世界大战期间，纳粹德国国防军
+使用Enigma并将其改良后用于军事用途。
 
-% \startplacefigure
-% [title={Engima}, reference=fig:enigma]
-% \startcombination[3*1]
-% {\externalfigure[enigma][type=jpg,height=4cm]}{\Tiny Engima加密机}
-% {\externalfigure[rotor][type=jpg,height=4cm]}{\Tiny 转子}
-% {\externalfigure[enigma-in-use][type=jpg,height=4cm]}{\Tiny 德军在法国战场使用Engima加密文件}
-% \stopplacefigure
+\startsubsection[title={Enigma的构造}]
+\index{enigma-constructs}
 
-键盘一共有26个键，键盘排列和广为使用的计算机键盘基本一样，只不过为了使通讯尽量地短和难以破译，空格、数字和标点
-符号都被取消，而只有字母键。键盘上方就是显示器，这可不是现今的计算机屏幕显示器，只不过是标示了同样字母的26个小
-灯泡，当键盘上的某个键被按下时，和这个字母被加密后的密文字母所对应的小灯泡就亮了起来，就是这样一种近乎原始的
-“显示”。在显示器的上方是三个直径6厘米的转子 (Rotor)，它们的主要部分隐藏在面板下，转子才是Enigma密码机最核心
-关键的部分。如果转子的作用仅仅是把一个字母换成另一个字母，那就是等同于我们前一节介绍的简单替换密码。转子的巧妙
-之处在于它会转，当按下键盘上的一个字母键，相应加密后的字母在显示器上通过灯泡闪亮来显示，而转子就自动地转动
-一个字母的位置。举例来说，当第一次键入\type{A}，灯泡\type{B}亮，转子转动一格，各字母所对应的密码就改变了。
-第二次再键入\type{A}时，它所对应的字母就可能变成了\type{C}；同样地，第三次键入\type{A}时，又可能是
-灯泡\type{D}亮了。这就是Enigma难以被破译的关键所在，这不是一种简单替换密码。同一个字母在明文的不同位置时，
-可以被不同的字母替换，而密文中不同位置的同一个字母，又可以代表明文中的不同字母，字母频率分析法在这里丝毫无
-用武之地了。这种加密方式在密码学上被称为{\it 复式替换密码}。
+Enigma加密机的外形如\in{图}[fig:enigma]所示，它是一种由键盘、齿轮、电池和灯泡所组成的机器，通过这一台
+机器就可以完成加密和解密两种操作。
 
+\startplacefigure
+[title={Engima}, reference=fig:enigma]
+\startcombination[3*1]
+{\externalfigure[enigma][type=jpg,height=4cm]}{\Tiny Engima加密机}
+{\externalfigure[rotor][type=jpg,height=4cm]}{\Tiny 转子}
+{\externalfigure[enigma-in-use][type=jpg,height=4cm]}{\Tiny 德军在法国战场使用Engima密码机}
+\stopcombination
+\stopplacefigure
+
+键盘上一共有26个按键，键盘排列和广为使用的计算机键盘基本一致，只不过为了使通讯尽量地短和难以破译，空格、数字和
+标点符号都被取消，而只有字母键。键盘上方就是“显示器” (Lampboard)，这可不是现今的计算机屏幕显示器，只不过是
+标示了同样字母的26个小灯泡。当键盘上的某个字母键被按下时，这个字母被加密后的密文字母所对应的小灯泡就亮了起来，
+就是这样一种近乎原始的“显示”。在显示器的上方是三个直径6厘米的转子 (Rotor)，转子是Enigma密码机最核心关键的部分。
+如果转子的作用仅仅是把一个字母转换成另一个字母，那就是等同于我们前一节介绍的简单替换密码。转子的巧妙之处在于它会
+旋转，每按下键盘上的一个字母键，相应加密后的字母在显示器上通过灯泡闪亮来显示，而转子就自动地转动一个字母的位置。
+这样，连续多次按下同一个字母键经过加密之后的密文字母都不相同。这就是Enigma难以被破译的关键所在，这不是一种简单
+替换密码。同一个字母在明文的不同位置时，可以被不同的字母替换，而密文中不同位置的同一个字母，又可以代表明文中的
+不同字母，字母频率分析法在这里丝毫无用武之地了。这种加密方式在密码学上也被称为{\it 复式替换密码}。
 
 但是如果连续键入26个字母，转子就会整整转一圈，回到原始的方向上，这时编码就和最初重复了。而在加密过程中，重复的
-现象就很是最大的破绽，因为这可以使破译密码的人从中发现规律。于是Enigma又增加了一个转子，当第一个转子转动整整
-一圈以后，它上面有一个齿轮拨动第二个转子，使得它的方向转动一个字母的位置。假设第一个转子已经整整转了一圈，
-按\type{A}键时显示器上\type{D}灯泡亮；当放开\type{A}键时，第一个转子上的齿轮也带动第二个转子同时转动一格，
-于是再次键入\type{A}时，加密的字母可能为\type{E}；再次放开键A时，就只有第一个转子转动了，于是第三次键入
-\type{A}时，与之相对应的就是字母就可能是\type{F}了。因此只有在$26 \times 26=676$个字母后才会重复原来的编码。
-而事实上Enigma有三个转子（二战后期德国海军使用的Enigma甚至有四个转子！），那么重复的概率就达到
-$26 \times 26 \times 26 = 17576$个字母之后。
+现象就是最大的破绽，因为这可以使破译密码的人从中发现规律。于是Enigma又增加了其他的转子，当前一个转子转动整整
+一圈以后，它上面有一个齿轮拨动下一个转子，使得它的方向转动一个字母的位置。而事实上，德军使用的Enigma有3个转子
+（德国防卫军版）或4个转子（德国海军M4版和德国国防军情报局版）。以Enigma密码机上配置了3个转子为例，重复的概率
+就达到了$26 \times 26 \times 26 = 17576$个字母之后。
+
+除此以外，在第一个转子之前和最后一个转子之后分别加上了一个接线板和反射器。接线板允许操作员设置各种不同的线路。
+接线板上的每条线都会连接一对字母，其作用就是在电流进入转子前改变它的方向。例如，将\type{A}插口和\type{F}插口
+连接起来，当操作员按下\type{A}键时，电流就会流到\type{F}插口（相当于按下了\type{F}键）再进入转子。电流进入
+转子前方向被改变，增强了Enigma的保密性。接线板上最多可以同时接13条线。
+
+反射器和转子的显著区别在于它并不转动，它仅仅将最后一个转子的其中两个触点连接起来。乍一看这么一个固定的反射器
+好像没什么用处，它并不增加可以使用的编码数目，其精妙之处在于，让电流重新折回转子，把它和解密联系起来就会看出
+这种设计的别具匠心了。为了解释Enigma密码机的工作原理，我们
+用\in{图}[fig:enigma-firstA]和\in{图}[fig:enigma-secondA]来分别说明第一次和第二次按下\type{A}键的
+时候，Enigma是怎么加密的。
+
+\startplacefigure
+[title={Enigma电路布线示意图：第一次按下\type{A}键}, reference=fig:enigma-firstA]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, font=\Tiny}]
+  
+  % plugboard, rotors, reflectors
+  \foreach \r/\c/\i in {plugboard/接线板/0, left-rotor/转子 (左)/1, mid-rotor/转子 (中)/2, right-rotor/转子 (右)/3, reflector/反射器/4} {
+    \node[minimum width=2cm, minimum height=9.25cm, 
+          label={below:\c}] (\r) at (1cm+\i*3cm, 4.625cm) {};
+  }
+
+  \node[minimum width=1.2em, minimum height=1.2em, above=1mm of left-rotor] {Z};
+  \node[minimum width=1.2em, minimum height=1.2em, above=1mm of mid-rotor] {L};
+  \node[minimum width=1.2em, minimum height=1.2em, above=1mm of right-rotor] {J};
+
+  % pins
+  \foreach \i in {0,1,...,4} {
+    \foreach \j in {0,1,...,25} {
+      \fill[white!62.5!black, yshift=\j*0.35cm+0.15cm, xshift=\i*3cm] (-0.15cm, 0) rectangle +(0.3cm, 0.2cm);
+      \ifnum \i < 4
+        \fill[white!62.5!black, yshift=\j*0.35cm+0.15cm, xshift=\i*3cm+2cm] (-0.15cm, 0) rectangle +(0.3cm, 0.2cm);
+      \fi
+    }
+  }
+
+  % plugboard
+  \foreach \a/\b in {0/5,1/7,2/2,3/3,4/10,5/0,6/16,7/1,8/8,
+  9/9,10/4,11/11,12/12,13/19,14/14,15/15,16/6,17/17,18/18,
+  19/13,20/25,21/21,22/22,23/23,24/24,25/20} {
+    \draw[white!62.5!black, semithick] (0.15cm, \a*0.35cm+0.25cm) -- (2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between plugboard and left rotor
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (2cm+0.15cm, \i*0.35cm+0.25cm) -- (3cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+  
+  % left rotor
+  \foreach \a/\b in {0/17,1/10,2/9,3/5,4/3,5/11,6/6,7/15,8/1,
+  9/23,10/12,11/14,12/4,13/16,14/22,15/18,16/2,17/21,18/13,
+  19/20,20/7,21/0,22/24,23/19,24/8,25/25} {
+    \draw[white!62.5!black, semithick] (3cm+0.15cm, \a*0.35cm+0.25cm) -- (3cm+2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between left and middle rotors
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (3cm+2cm+0.15cm, \i*0.35cm+0.25cm) -- (6cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % middle rotor
+  \foreach \a/\b in {0/19,1/0,2/20,3/15,4/10,5/3,6/21,7/16,8/13,
+  9/4,10/23,11/17,12/11,13/5,14/1,15/22,16/12,17/24,18/14,19/9,
+  20/2,21/8,22/7,23/25,24/18,25/6} {
+    \draw[white!62.5!black, semithick] (6cm+0.15cm, \a*0.35cm+0.25cm) -- (6cm+2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between middle and right rotors
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (6cm+2cm+0.15cm, \i*0.35cm+0.25cm) -- (9cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % right rotor
+  \foreach \a/\b in {0/4,1/7,2/18,3/6,4/13,5/12,6/25,7/14,8/23,
+  9/17,10/24,11/3,12/21,13/2,14/11,15/0,16/10,17/19,18/22,19/16,
+  20/1,21/15,22/5,23/8,24/20,25/9} {
+    \draw[white!62.5!black, semithick] (9cm+0.15cm, \a*0.35cm+0.25cm) -- (9cm+2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between right rotor and reflector
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (9cm+2cm+0.15cm, \i*0.35cm+0.25cm) -- (12cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % reflector
+  \foreach \a/\b/\n in {3/4/1,5/8/1,11/15/1,16/17/1,18/20/1,21/22/1,
+  2/9/2,10/24/2,0/12/3,13/19/3,6/14/4,7/23/5,1/25/6} {
+    \draw[white!62.5!black, semithick] (12cm+0.15cm, \a*0.35cm+0.25cm) -- 
+      (12cm+0.15cm+\n*0.25cm, \a*0.35cm+0.25cm) --
+      (12cm+0.15cm+\n*0.25cm, \b*0.35cm+0.25cm) --
+      (12cm+0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % keyboard
+  \foreach \c/\i in {Z/0, Y/1, X/2, W/3, V/4, U/5, T/6, S/7, R/8, 
+      Q/9, P/10, O/11, N/12, M/13, L/14, K/15, J/16, I/17, H/18, 
+      G/19, F/20, E/21, D/22, C/23, B/24, A/25} {
+    \pgfmathmod{\i}{2}
+    \let\m\pgfmathresult
+    \pgfmathparse{int(\m)}
+    \let\r\pgfmathresult
+    \ifnum \r > 0
+      \node[shape=circle, inner sep=0pt, minimum size=1em] (\c) at (-1.5cm, \i*0.35cm+0.25cm) {\c};
+    \else
+      \node[shape=circle, inner sep=0pt, minimum size=1em] (\c) at (-2cm, \i*0.35cm+0.25cm) {\c};
+    \fi
+    \draw[white!62.5!black, semithick] (\c.east) -- (-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % highlight
+  \startscope [line width=4pt, line join=round]
+  \draw[green!62.5!black, draw opacity=0.5] (A.east) -- (-0.15cm, 25*0.35cm+0.25cm) -- 
+  (0.15cm, 25*0.35cm+0.25cm) -- (2cm-0.15cm, 20*0.35cm+0.25cm) --
+  (2cm+0.15cm, 20*0.35cm+0.25cm) -- (3cm-0.15cm, 20*0.35cm+0.25cm) --
+  (3cm+0.15cm, 20*0.35cm+0.25cm) -- (3cm+2cm-0.15cm, 7*0.35cm+0.25cm) --
+  (3cm+2cm+0.15cm, 7*0.35cm+0.25cm) -- (6cm-0.15cm, 7*0.35cm+0.25cm) --
+  (6cm+0.15cm, 7*0.35cm+0.25cm) -- (6cm+2cm-0.15cm, 16*0.35cm+0.25cm) --
+  (6cm+2cm+0.15cm, 16*0.35cm+0.25cm) -- (9cm-0.15cm, 16*0.35cm+0.25cm) --
+  (9cm+0.15cm, 16*0.35cm+0.25cm) -- (9cm+2cm-0.15cm, 10*0.35cm+0.25cm) --
+  (9cm+2cm+0.15cm, 10*0.35cm+0.25cm) -- (12cm-0.15cm, 10*0.35cm+0.25cm) --
+  (12cm+0.15cm, 10*0.35cm+0.25cm) -- (12cm+0.15cm+2*0.25cm, 10*0.35cm+0.25cm) --
+  (12cm+0.15cm+2*0.25cm, 24*0.35cm+0.25cm) -- (12cm+0.15cm, 24*0.35cm+0.25cm) --
+  (12cm-0.15cm, 24*0.35cm+0.25cm) -- (9cm+2cm+0.15cm, 24*0.35cm+0.25cm) --
+  (9cm+2cm-0.15cm, 24*0.35cm+0.25cm) -- (9cm+0.15cm, 10*0.35cm+0.25cm) -- 
+  (9cm-0.15cm, 10*0.35cm+0.25cm) -- (6cm+2cm+0.15cm, 10*0.35cm+0.25cm) -- 
+  (6cm+2cm-0.15cm, 10*0.35cm+0.25cm) -- (6cm+0.15cm, 4*0.35cm+0.25cm) -- 
+  (6cm-0.15cm, 4*0.35cm+0.25cm) -- (3cm+2cm+0.15cm, 4*0.35cm+0.25cm) -- 
+  (3cm+2cm-0.15cm, 4*0.35cm+0.25cm) -- (3cm+0.15cm, 12*0.35cm+0.25cm) -- 
+  (3cm-0.15cm, 12*0.35cm+0.25cm) -- (2cm+0.15cm, 12*0.35cm+0.25cm) -- 
+  (2cm-0.15cm, 12*0.35cm+0.25cm) -- (0.15cm, 12*0.35cm+0.25cm) -- (N.east);
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+\startplacefigure
+[title={Enigma电路布线示意图：第二次按下\type{A}键}, reference=fig:enigma-secondA]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, font=\Tiny}]
+  
+  % plugboard, rotors, reflectors
+  \foreach \r/\c/\i in {plugboard/接线板/0, left-rotor/转子 (左)/1, mid-rotor/转子 (中)/2, right-rotor/转子 (右)/3, reflector/反射器/4} {
+    \node[minimum width=2cm, minimum height=9.25cm, 
+          label={below:\c}] (\r) at (1cm+\i*3cm, 4.625cm) {};
+  }
+  \node[minimum width=1.2em, minimum height=1.2em, above=1mm of left-rotor] {A};
+  \node[minimum width=1.2em, minimum height=1.2em, above=1mm of mid-rotor] {M};
+  \node[minimum width=1.2em, minimum height=1.2em, above=1mm of right-rotor] {J};
+
+  % pins
+  \foreach \i in {0,1,...,4} {
+    \foreach \j in {0,1,...,25} {
+      \fill[white!62.5!black, yshift=\j*0.35cm+0.15cm, xshift=\i*3cm] (-0.15cm, 0) rectangle +(0.3cm, 0.2cm);
+      \ifnum \i < 4
+        \fill[white!62.5!black, yshift=\j*0.35cm+0.15cm, xshift=\i*3cm+2cm] (-0.15cm, 0) rectangle +(0.3cm, 0.2cm);
+      \fi
+    }
+  }
+
+  % plugboard
+  \foreach \a/\b in {0/5,1/7,2/2,3/3,4/10,5/0,6/16,7/1,8/8,
+  9/9,10/4,11/11,12/12,13/19,14/14,15/15,16/6,17/17,18/18,
+  19/13,20/25,21/21,22/22,23/23,24/24,25/20} {
+    \draw[white!62.5!black, semithick] (0.15cm, \a*0.35cm+0.25cm) -- (2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between plugboard and left rotor
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (2cm+0.15cm, \i*0.35cm+0.25cm) -- (3cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+  
+  % left rotor
+  \foreach \a/\b in {0/0,1/18,2/11,3/10,4/6,5/4,6/12,7/7,8/16,9/2,
+  10/24,11/13,12/15,13/5,14/17,15/23,16/19,17/3,18/22,19/14,
+  20/21,21/8,22/1,23/25,24/20,25/9} {
+    \draw[white!62.5!black, semithick] (3cm+0.15cm, \a*0.35cm+0.25cm) -- (3cm+2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between left and middle rotors
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (3cm+2cm+0.15cm, \i*0.35cm+0.25cm) -- (6cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % middle rotor
+  \foreach \a/\b in {0/7,1/20,2/1,3/21,4/16,5/11,6/4,7/22,8/17,9/14,
+  10/5,11/24,12/18,13/12,14/6,15/2,16/23,17/13,18/25,19/15,20/10,
+  21/3,22/9,23/8,24/0,25/19} {
+    \draw[white!62.5!black, semithick] (6cm+0.15cm, \a*0.35cm+0.25cm) -- (6cm+2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between middle and right rotors
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (6cm+2cm+0.15cm, \i*0.35cm+0.25cm) -- (9cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % right rotor
+  \foreach \a/\b in {0/4,1/7,2/18,3/6,4/13,5/12,6/25,7/14,8/23,
+  9/17,10/24,11/3,12/21,13/2,14/11,15/0,16/10,17/19,18/22,19/16,
+  20/1,21/15,22/5,23/8,24/20,25/9} {
+    \draw[white!62.5!black, semithick] (9cm+0.15cm, \a*0.35cm+0.25cm) -- (9cm+2cm-0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % connection between right rotor and reflector
+  \foreach \i in {0,1,...,25} {
+    \draw[white!62.5!black, semithick] (9cm+2cm+0.15cm, \i*0.35cm+0.25cm) -- (12cm-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % reflector
+  \foreach \a/\b/\n in {3/4/1,5/8/1,11/15/1,16/17/1,18/20/1,21/22/1,
+  2/9/2,10/24/2,0/12/3,13/19/3,6/14/4,7/23/5,1/25/6} {
+    \draw[white!62.5!black, semithick] (12cm+0.15cm, \a*0.35cm+0.25cm) -- 
+      (12cm+0.15cm+\n*0.25cm, \a*0.35cm+0.25cm) --
+      (12cm+0.15cm+\n*0.25cm, \b*0.35cm+0.25cm) --
+      (12cm+0.15cm, \b*0.35cm+0.25cm);
+  }
+
+  % keyboard
+  \foreach \c/\i in {Z/0, Y/1, X/2, W/3, V/4, U/5, T/6, S/7, R/8, 
+      Q/9, P/10, O/11, N/12, M/13, L/14, K/15, J/16, I/17, H/18, 
+      G/19, F/20, E/21, D/22, C/23, B/24, A/25} {
+    \pgfmathmod{\i}{2}
+    \let\m\pgfmathresult
+    \pgfmathparse{int(\m)}
+    \let\r\pgfmathresult
+    \ifnum \r > 0
+      \node[shape=circle, inner sep=0pt, minimum size=1em] (\c) at (-1.5cm, \i*0.35cm+0.25cm) {\c};
+    \else
+      \node[shape=circle, inner sep=0pt, minimum size=1em] (\c) at (-2cm, \i*0.35cm+0.25cm) {\c};
+    \fi
+    \draw[white!62.5!black, semithick] (\c.east) -- (-0.15cm, \i*0.35cm+0.25cm);
+  }
+
+  % highlight
+  \startscope [line width=4pt, line join=round]
+  \draw[green!62.5!black, draw opacity=0.5] (A.east) -- (-0.15cm, 25*0.35cm+0.25cm) -- 
+  (0.15cm, 25*0.35cm+0.25cm) -- (2cm-0.15cm, 20*0.35cm+0.25cm) --
+  (2cm+0.15cm, 20*0.35cm+0.25cm) -- (3cm-0.15cm, 20*0.35cm+0.25cm) --
+  (3cm+0.15cm, 20*0.35cm+0.25cm) -- (3cm+2cm-0.15cm, 21*0.35cm+0.25cm) --
+  (3cm+2cm+0.15cm, 21*0.35cm+0.25cm) -- (6cm-0.15cm, 21*0.35cm+0.25cm) --
+  (6cm+0.15cm, 21*0.35cm+0.25cm) -- (6cm+2cm-0.15cm, 3*0.35cm+0.25cm) --
+  (6cm+2cm+0.15cm, 3*0.35cm+0.25cm) -- (9cm-0.15cm, 3*0.35cm+0.25cm) --
+  (9cm+0.15cm, 3*0.35cm+0.25cm) -- (9cm+2cm-0.15cm, 6*0.35cm+0.25cm) --
+  (9cm+2cm+0.15cm, 6*0.35cm+0.25cm) -- (12cm-0.15cm, 6*0.35cm+0.25cm) --
+  (12cm+0.15cm, 6*0.35cm+0.25cm) -- (12cm+0.15cm+4*0.25cm, 6*0.35cm+0.25cm) --
+  (12cm+0.15cm+4*0.25cm, 14*0.35cm+0.25cm) -- (12cm+0.15cm, 14*0.35cm+0.25cm) --
+  (12cm-0.15cm, 14*0.35cm+0.25cm) -- (9cm+2cm+0.15cm, 14*0.35cm+0.25cm) --
+  (9cm+2cm-0.15cm, 14*0.35cm+0.25cm) -- (9cm+0.15cm, 7*0.35cm+0.25cm) -- 
+  (9cm-0.15cm, 7*0.35cm+0.25cm) -- (6cm+2cm+0.15cm, 7*0.35cm+0.25cm) -- 
+  (6cm+2cm-0.15cm, 7*0.35cm+0.25cm) -- (6cm+0.15cm, 0*0.35cm+0.25cm) -- 
+  (6cm-0.15cm, 0*0.35cm+0.25cm) -- (3cm+2cm+0.15cm, 0*0.35cm+0.25cm) -- 
+  (3cm+2cm-0.15cm, 0*0.35cm+0.25cm) -- (3cm+0.15cm, 0*0.35cm+0.25cm) -- 
+  (3cm-0.15cm, 0*0.35cm+0.25cm) -- (2cm+0.15cm, 0*0.35cm+0.25cm) -- 
+  (2cm-0.15cm, 0*0.35cm+0.25cm) -- (0.15cm, 5*0.35cm+0.25cm) -- (U.east);
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+首先，我们假设左、中、右三个转子的位置分别对应字母\type{Z}、\type{L}、\type{J}，如\in{图}[fig:enigma-firstA]
+所示。字母键\type{A}按下时，电流先流到接线板上的\type{A}插口，由于接线板上\type{A}插口和\type{F}插口连接起来了，
+电流方向被改变，从\type{F}插口流出后进入到左边第一个转子的\type{F}插口。之后，依次经过所有转子，每个转子都会
+对电流的方向进行转换，即对字母进行替换。当电流从右边最后一个转子的\type{P}插口出来之后，经过反射器改变方向
+进入最后一个转子的\type{B}插口。此后，电流沿相反方向依次经过所有转子，最后从接线板\type{N}插口出来，点亮
+\type{N}灯泡。这个就是加密的整个过程。在当前的设置下，如果这时按的不是\type{A}键而是\type{N}键，那么电流
+信号恰好按照前面\type{A}键被按下时的相反方向同行，最后到达\type{A}灯泡。换句话说，在这种转子的设置下，
+反射器使得解密过程完全重现加密过程。
 
 
+再次按下字母键\type{A}，左边的转子转动一格回到字母\type{A}的位置，同时带动中间的转子转动一格到\type{M}的
+位置，右边的转子不动，仍然停留在\type{J}的位置，如\in{图}[fig:enigma-secondA]所示。在此时的转子的设置下，
+按下\type{A}键，\type{U}灯泡亮起。同样，如果这时按下的是\type{U}键，则点亮的是\type{A}灯泡。反射器再次
+完美地使得解密过程重现了加密过程。
+
+从数学的角度，Enigma对每个字母的加密和解密过程可以看作由多步字符替换而组合在一起的过程。我们用$P$表示接线板
+的连线所对应的字符替换，$L$、$M$、$R$分别表示左、中、右3个转子所对应的字符替换，$U$表示反射器所对应的字符
+替换。其中接线板和反射器对应的字符替换$P$和$U$是一经设置就不再变化的。三个转子对应的字符替换$L$、$M$、$R$则
+会随着字符在明文消息中的位置不同发生变化，我们用下标$k$来表示它们在第$k$个字符的替换。另外，当电流经过反射器
+后折回沿反方向经过转子和接线板的过程正好是之前字符替换的反操作，我们用上标$-1$来表示这些字符替换的反操作。
+因此，明文中第$k$个字符$x_k$被加密后的字符$E_k(x)$可以用如下数学公式表示：
+\startformula
+E_k(x) = P^{-1} L_k^{-1} M_k^{-1} R_k^{-1} U R_k M_k L_k P x_k
+\stopformula
+
+从上述加密过程对应的数学公式可以看出，Enigma构造具有完美的对称性。解密和加密具有相同的组合过程。密文中第$k$个密文
+字符$E_k(x)$被解密还原出明文字符$x_k$可以用相同的数学公式表示：
+\startformula
+x_k = P^{-1} L_k^{-1} M_k^{-1} R_k^{-1} U R_k M_k L_k P E_k(x)
+\stopformula
+
+\stopsubsection
+
+\startsubsection[title={Enigma的加密过程}]
+
+\startplacefigure[title={Enigma的加密过程}, reference=fig:enigma-encrypt]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  % node distance=0.5cm,
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, font=\Tiny, 
+    inner sep=2mm, minimum height=2em, minimum width=4.8em},
+  labels/.style={draw=none,fill=none,font=\Tiny,inner sep=0}]
+
+  \node (plaintext) {明文消息};
+  \node [rounded corners=10pt, right=of plaintext] (encrypt) {(4)加密消息} edge [pre] (plaintext);
+  \node [right=of encrypt] (encrypted-text) {加密后的消息} edge [pre] (encrypt);
+  \node [rounded corners=10pt, right=of encrypted-text] (concat) {(5)拼接} edge [pre] (encrypted-text);
+  \node [right=of concat] {密文消息} edge [pre] (concat);
+
+  \node [above=of encrypt] (comm-passwd) {\vbox{\hsize 5em 发送者选择的通信密码}} 
+    edge [post] node[labels,right]{(3)重新设置Enigma} (encrypt);
+  \node [rounded corners=10pt, right=of comm-passwd] (encrypt-passwd) {(2)加密通信密码} 
+    edge [pre] node[labels,above]{输入两次} (comm-passwd);
+  \node [above=of concat] (encrypted-passwd) {\vbox{\hsize 4em 加密后的通信密码}} edge [pre] (encrypt-passwd) edge [post] (concat);
+
+  \node [above=of encrypt-passwd] (daily-passwd) {\vbox{\hsize 5em 密码本中的每日密码}} 
+    edge [post] node[labels,right]{(1)设置Enigma} (encrypt-passwd);
+
+  \startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, inner sep=0.6cm, 
+   rounded corners, 
+   fit=(encrypt) (encrypted-passwd)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+发送者和接收者需要各自拥有一台Enigma密码机。发送者用Enigma对明文加密，记录生成的密文并通过无线电发送给接收者。
+接收者收到密文后用自己的Enigma解密，还原出明文。
+
+发送者和接收者会事先收到一份叫做国防军密码本的册子，这个册子中记载了发送者和接收者所使用的每日密码。Enigma的加密
+过程如\in{图}[fig:enigma-encrypt]所示，具体描述如下：
+
+{\bf (1) 设置Enigma}
+
+发送者查阅国防军密码本，找到当天的每日密码，并按照该密码设置Engima，具体来说，这个每日密码描述了如果操作
+接线板上的接线并设置3个转子排列顺序和每个转子的初始位置。
+
+{\bf (2) 加密通信密码}
+
+接下来，发送者要想出3个字母，并将其加密。这3个字母称为通信密码。通信密码的加密也是用Enigma完成的。假设发送者
+选择的的通信密码是\type{cat}，则发送者需要在Enigma的键盘上输入两次该通信密码，即\type{catcat}。发送者观察
+亮起的灯泡对应的字符并记录这6个字母加密后的密文，我们用大写字母来假设得到的密文字母是\type{PCVTAM}。
+
+{\bf (3) 重新设置Enigma}
+
+接下来，发送者根据通信密码重新设置Enigma。通信密码中的3个字母就代表了3个转子的初始位置。也就是说，左、中、右
+三个转子分别转到\type{c}、\type{a}、\type{t}的位置。
+
+{\bf (4) 加密消息}
+
+发送者从键盘上逐字输入明文消息的字符，并从灯泡中读取所对应的字母并记录下来。
+
+{\bf (5) 拼接}
+
+最后，发送者将加密后的通信密码和加密后的消息拼接在一起，通过无线电发送给接收者。
+
+\stopsubsection
+
+\startsubsection[title={Enigma的解密过程}]
+
+接收者收到密文消息之后，解密过程如\in{图}[fig:enigma-decrypt]所示，具体操作步骤如下：
+
+\startplacefigure[title={Enigma的加密过程}, reference=fig:enigma-decrypt]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  % node distance=0.5cm,
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, font=\Tiny, 
+    inner sep=2mm, minimum height=2em, minimum width=4.8em},
+  labels/.style={draw=none,fill=none,font=\Tiny,inner sep=0}]
+
+  \node (ciphertext) {密文消息};
+  \node [rounded corners=10pt, right=of ciphertext] (split) {(1)拆分} edge [pre] (ciphertext);
+  \node [right=of split] (encrypted-text) {加密后的消息} edge [pre] (split);
+  \node [rounded corners=10pt, right=of encrypted-text] (decrypt) {(5)解密消息} edge [pre] (encrypted-text);
+  \node [right=of decrypt] {明文消息} edge [pre] (decrypt);
+
+  \node [above=of split] (encrypted-passwd) {\vbox{\hsize 4em 加密后的通信密码}} edge [pre] (split);
+  \node [rounded corners=10pt, right=of encrypted-passwd] (decrypt-passwd) {(3)解密通信密码} edge [pre] (encrypted-passwd);
+  \node [above=of decrypt] (comm-passwd) {\vbox{\hsize 5em 发送者选择的通信密码}} 
+    edge [pre] (decrypt-passwd) 
+    edge [post] node[labels,right]{(4)重新设置Enigma} (decrypt);
+
+  \node [above=of decrypt-passwd] (daily-passwd) {\vbox{\hsize 5em 密码本中的每日密码}} 
+    edge [post] node[labels,right]{(2)设置Enigma} (decrypt-passwd);
+
+  \startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, inner sep=0.6cm, 
+   rounded corners, 
+   fit=(split) (comm-passwd)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
 
 
-在此基础上谢尔比乌斯十分巧妙地在三个转子的一端加上了一个反射器，
-把键盘和显示器中的相同字母用电线连在一起。反射器和转子一样，把某一个字母连在另一个字母上，但是它并不转动。乍一看这么一个固定的反射器好像没什么用处，它并不增加可以使用的编码数目，但是把它和解码联系起来就会看出这种设计的别具匠心了。当一个键被按下时，信号不是直接从键盘传到显示器，而是首先通过三个转子连成的一条线路，然后经过反射器再回到三个转子，通过另一条线路再到达显示器上，比如说上图中A键被按下时，亮的是D灯泡。如果这时按的不是A键而是D键，那么信号恰好按照上面A键被按下时的相反方向通行，最后到达A灯泡。换句话说，在这种设计下，反射器虽然没有像转子那样增加不重复的方向，但是它可以使解码过程完全重现编码过程。
+{\bf (1) 拆分}
 
+接收者将密文消息拆分成两个部分，即开头的6个字母\type{PCVTAM}和剩下的字母序列。
 
-https://en.wikipedia.org/wiki/Enigma_machine
+{\bf (2) 设置Enigma}
+
+像发送者一样，接收者查阅国防军密码本，找到当天的每日密码，并按照该密码设置Engima。
+
+{\bf (3) 解密通信密码}
+
+开头的6个字母\type{PCVTAM}即加密后的通信密码，接收者用Enigma对其进行解密，得到\type{catcat}。因为
+\type{catcat}是\type{cat}重复两次的组合，这样，接收者也可以判断密文消息在通信的过程是否发生错误。
+
+{\bf (4) 重新设置Enigma}
+
+接收者根据解密后的通信密码\type{cat}重新设置Enigma三个转子的初始位置。
+
+{\bf (5) 解密消息}
+
+接收者用当前Enigma的设置，对密文消息剩下部分的字母序列进行解密，得到明文消息内容。
+
+\stopsubsection
+
+\startsubsection[title={每日密码和通信密码}]
+
+通过前面对Enigma加密和解密过程的描述，我们注意到Enigma中出现了每日密码和通信密码这两种不同的密钥。在Enigma中，
+每日密码被用来加密通信密码，而不是用来加密消息的，消息是用通信密码加密的。也就是说，每日密码是一种用来加密密钥的
+密钥。这样的密钥，被称为{\it 密钥加密密钥} (Key Encrypting Key, KEK)。KEK在现代加密算法中依然被广泛使用。
+后面，我们在介绍混合密码系统时还会多次遇到这一概念。
+
+\stopsubsection
+
+\startsubsection[title={Enigma的弱点}]
+
+我们已经了解了Enigma的加密和解密过程，相比较于简单替换密码，Engima的确要复杂得多。但我们仍然能找到Enigma的一些
+弱点。
+
+{\bf 明文中的字母被Enigma加密之后永远不会被替换成该字母本身。}
+Enigma反射器在电流重新进入转子之前，改变了电流方向，无论接线板怎么接线以及三个转子的顺序和每个转子的旋转
+位置如何改变，输入的字母都绝对不会被替换成该字母本身。第二次世界大战中，英国军队的密码破译者截获了一段
+Enigma的密文，他们发现在密文中字母\type{L}从未出现。密码破译者根据这一事实推测出明文是一段只有
+字母\type{L}的文字。发送者的目的是将毫无意义的明文加密发送以干扰密码破译者。发送者本想干扰密码破译者，
+没想到却反而为破译者提供了线索。
+
+{\bf 通信密码的弱点。}
+通信密码太短，被加密后只有6个字母。密码破译者可以知道，密文开头的6个字母就是通信密码被连续输入两次而加密的。
+而且，Enigma在加密通信密码这一重要步骤中，绝大部分情况下只有最左边的转子会旋转，只有当左边的转子设置
+到\type{U}之后的字母时，才可能带动中间的转子旋转。这个特点也可能被密码破译者利用。
+
+{\bf 国防军的每日密码本也是一个弱点。}
+国防军的每日密码本是使用Enigma的必要操作手册。因为发送者和接收者都得使用这个密码本，如果这个密码本落到
+敌人手里，就必须作废这个已经派发到全军的密码本，而不得不重新制作新的密码本。同时，如何安全地把这个密码本
+配送到全军中也是一个问题。这个话题，就是我们今后要在介绍现代密码通信时要详细探讨的{\it 密钥配送问题}。
+
+\stopsubsection
+
+\startsubsection[title={Enigma的破译}]
+
+Enigma在当时被认为是一种无法破译的密码机，德军的一份对Enigma的评估写道：“即使敌人获取了一台同样的机器，
+它仍旧能够保证其加密系统的保密性。”Engima的设计并不依赖Enigma的构造（相当于加密算法），只要不知道Enigma的
+设置（相当于密钥），就无法破译密码。Enigma的这个设计理念已经契合了现代密码体系的思想，即加密系统的保密性只应
+建立在对密钥的保密上，不应该取决于加密算法的保密。Enigma的设置由每日密码所决定，具体表现为3个转子的排列
+顺序、每个转子的初始位置、以及接线板连线的状况。我们先来看看要暴力破解，需要实验多少种可能性：
+
+\startitemize[1,packed,broad]
+\item 3个转子的排列顺序存在6种可能性；
+\item 3个转子初始位置存在$26 \times 26 \times 26 = 17,576$种可能性；
+\item 接线板上两两交换6对字母的可能性则异常庞大，有$100,391,791,500$种。
+\stopitemize
+
+于是一共有$17576 \times 6 \times 100,391,791,500$，其结果大约为$10,000,000,000,000,000$！即一亿亿种
+可能性！这样庞大的可能性，换言之，即便能动员大量的人力物力，要想靠暴力破解法来逐一试验可能性，那几乎是不可能的。
+
+1931年11月8日，法国情报人员通过间谍活动搞到了Engima的操作和内部线路的资料，但是法国还是无法破译它，因为Enigma的
+设计要求就是要在机器被缴获后仍具有高度的保密性。当时的法军认为，由于凡尔赛条约限制了德军的发展，也就没有花费人力
+物理去破译它。与法国不同，第一次世界大战中新独立的波兰的处境却很危险，西边的德国根据凡尔赛条约割让给了波兰大片领土，
+德国人对此怀恨在心，而东边的苏联也在垂涎着波兰的领土。所以波兰需要时刻了解这两个国家的内部信息。在科学的其他领域，
+我们说失败乃成功之母；而在密码分析领域，我们则应该说恐惧乃成功之母。这种险峻的形势造就了波兰一大批优秀的密码学家。
+Enigma最终由波兰密码学家马里安·雷杰夫斯基 (Marian Rejewski) 破译。
+
+雷杰夫斯基深知“重复乃密码大敌”。在Enigma密码中，最明显的重复莫过于每条电文最开始的那六个字母，它由三个字母的密钥
+重复两次加密而成。德国人没有想到这里会是看似固若金汤的Enigma防线的弱点。雷杰夫斯基每天都会收到一大堆截获的德国电报，
+所以一天中可以得到许多这样的六个字母串，它们都由同一个当日密钥加密而成。通过分析这些电文的前六个字母串，雷杰夫斯基
+总结出Enigma的数量巨大的密钥主要是由接线板来提供的，如果只考虑转子的排列顺序和它们的初始位置，
+只有$6 \times 17576 = 105,456$种可能性。虽然这还是一个很大的数字，但是把所有的可能性都试验一遍，已经是一件可以
+做到的事情了。雷杰夫斯基和同事根据情报复制出了Enigma样机，并在Enigma的基础上设计了一台能自动验证所有
+$26 \times 26 \times 26 = 17,576$个转子位置的机器，为了同时试验三个转子的所有可能的排列顺序，就需要6台同样的
+机器，这样就可以试遍所有的$6 \times 17576 = 105,456$种转子排列顺序和初始位置。所有这6台Enigma和为使它们协作的
+其他器材组成了一整个大约一米高的机器，能在两小时内找出当日密钥。
+
+\stopsubsection
 
 \stopsection
 
@@ -731,6 +1225,15 @@ https://en.wikipedia.org/wiki/Enigma_machine
 
 \startsection[title={本章小结}]
 \index{summary}
+
+我们在本章回顾了历史上一些经典的加密算法及其典故，从中我们知道，古典密码多使用替换法进行加密和解密，并详细介绍了简单
+替换和复式替换两种加密方法。同时，我们还讨论了这些古典密码所面临的问题，并尝试用暴力破解和频率分析的方法分别破译了
+凯撒密码和简单替换密码。通过本章的学习，我们了解到：
+
+\startitemize[n,packed,broad]
+\item 暴力破解适用于破译密钥空间较小的加密算法，频率分析可以用于破解简单的单表替换密码。
+\item 加密系统的保密性只应建立在对密钥的保密上，不应该取决于加密算法的保密。
+\stopitemize
 
 \stopsection
 
