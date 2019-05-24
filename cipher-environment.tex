@@ -44,9 +44,30 @@
 \usemodule[pgffor]
 \usemodule[pgfmath]
 \usetikzlibrary
-  [arrows,decorations.pathmorphing,
+  [arrows,decorations.pathmorphing,math,calc,intersections,
   shapes.geometric,shapes.callouts,
   backgrounds,positioning,fit,mindmap,shadows]
+
+% https://wiki.contextgarden.net/Modules/t-vim
+\usemodule[vim]
+\setuptextrules
+  [color=darkyellow,rulecolor=darkyellow,rulethickness=1pt]
+\definevimtyping
+  [pseudocode]
+  [syntax=pascal,escape=on,numbering=no,
+  style={\switchtobodyfont[small,tt]},
+  before={\starttextrule{\small\bf 伪代码描述}},
+  after={\stoptextrule},
+  colorscheme=default]
+
+\definevimtyping
+  [shellcode]
+  [syntax=sh,escape=on,numbering=no,
+  style={\switchtobodyfont[tt]},
+  lines=split,
+  before={\vskip 0.5em},
+  after={\vskip 0.5em},
+  colorscheme=default]
 
 
 \startuseMPgraphic{cover page}

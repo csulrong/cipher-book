@@ -3,33 +3,674 @@
 
 \environment cipher-environment
 
-\startchapter[reference=sec:symmetric,title={对称加密算法}]
+\startchapter[title={对称加密算法},reference=ch:symmetric]
 
-% \startintro
+古典加密算法那些针对字符进行转换的加密方式在计算机技术所主导的信息时代已经没什么实用价值了。计算机的操作对象并非
+针对文字，而是由0和1组成的比特序列。无论是文字、图像、声音、视频还是程序，在计算机中都是用比特序列来表示的。将
+这些现实世界中的东西转换成比特序列的操作被称为{\it 编码} (encoding)。现代加密技术是以编码后的比特序列为基本
+加密单元的。现代加密算法大致分为两大类：{\it 对称加密算法}和{\it 非对称加密算法}，如\in{图}[fig:modern]所示。
 
+\startplacefigure[title={现代加密算法}, reference=fig:modern]
+\midaligned{
+\starttikzpicture
+[edge from parent fork down, level distance=15mm,
+level 1/.style={sibling distance=60mm},
+level 2/.style={sibling distance=50mm},
+level 3/.style={sibling distance=15mm},
+every node/.style={fill=white!62.5!black,draw=red!62.5!black,thick,rounded corners,font=\Tiny},
+edge from parent/.style={red!62.5!black,-o,thick,draw}]
+\node {现代密码算法}
+child {node {对称加密算法}
+  child {node {分组密码}
+    child {node {DES算法}}
+    child {node {3DES算法}}
+    child {node {AES算法}}
+    child {node {Blowfish算法}}
+  }
+  child {node {流密码}
+    child {node {RC4算法}}
+    child {node {SEAL算法}}
+  }
+}
+child {node {非对称加密算法}
+  child[sibling distance=17mm] {node {RSA算法}}
+  child[sibling distance=17mm] {node {EIGamal算法}}
+  child[sibling distance=17mm] {node {ECC算法}}
+};
+\stoptikzpicture
+}
+\stopplacefigure
 
-% \stopintro
+其中，对称加密算法还分为流密码和分组密码。本章将具体介绍几种常用的对称加密算法，包括流密码RC4和
+分组密码DES、3DES、AES以及Blowfish。
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\startsection[title={DES}]
-\index{des}
+\startsection[title={流密码和分组密码},reference=sec:stream-vs-block]
+\index{sec:stream-vs-block}
+
+在对称加密算法中，按照加密方式的不同，可以分为流密码和分组密码。
+
+在流密码加密方式下，明文称为明文流，以比特序列的方式表示。加密时候，先由种子密钥生成一个密钥流。然后利用加密算法
+把明文流和密钥流进行加密，产生密文流。流密码每次只针对明文流中的单个比特位进行加密变换，加密过程所需要的密钥流由
+种子密钥通过密钥流生成器产生。流密码的主要原理是通过随机数发生器产生性能优良的伪随机序列，使用该序列加密明文流
+（按比特位加密），得到密文流。若密钥流是无周期、无限长随机序列，则每一个明文都对应一个随机的加密密钥，流密码是
+“一次一密”密码体制,也就是绝对安全的。实际应用中密钥流都用有限存储和复杂逻辑的电路产生，此时它的生成器只有有限个
+状态，这样，它早晚要到初始状态而呈现出一定长度的周期，其输出也就是周期序列。所以,实际应用中的流密码不会实现
+“一次一密”密码体制，但若生成的密钥流周期够长，随机性好，其安全强度还是能保证的。因此,密钥流生成器的设计是流密码
+的核心，流密码的安全强度取决于密钥流的周期、复杂度、随机(伪随机)性等。流密码涉及许多理论知识，提了很多设计原理，
+得到了广泛分析，但很多研究成果并没有全部公开，可能是因为目前流密码主要用于军事和外交。日前,公开的流密码算法主要
+有RC4、SEAL等。
+
+\stopsection
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startsection[title={流密码：RC4},reference=sec:rc4]
+\index{sec:rc4}
+
+RC4 (Rivest Cipher 4) 是由罗纳德·李维斯特 (Ron Rivest) 在1987年开发出来的，RC4开始时是商业密码，没有
+公开发表出来，但是在1994年9月份的时候，它被人匿名公开在了密码朋克 (Cypherpunks) 邮件列表上，随后又传播到了
+互联网的许多站点被公开，RC4也就不再是商业秘密了，只是它的名字“RC4”仍然是一个注册商标。RC4已经成为一些常用的
+协议和标准的一部分，如1997年的WEP和2003/2004年无线卡的WPA；和1995年的SSL，以及后来1999年的TLS。让它如此
+广泛分布和使用的主要因素是它不可思议的简单和速度，不管是软件还是硬件，实现起来都十分容易。
+
+RC4算法的原理很简单，包括{\it 初始化算法}（Key Scheduling Algorithm, KSA）和{\it 伪随机子密码生成算法}
+(Pseudo Random Generation Algorithm, PRGA) 两大部分。
+
+
+\startplacefigure[title={RC4初始化算法对S盒的初始化过程示意图}, reference=fig:rc4-init]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  textnode/.style={draw=red!62.5!black, thick, fill=white!62.5!black, 
+  minimum width=1.8em, minimum height=1.4em, font=\Tiny},
+  plainnode/.style={minimum width=1.8em,minimum height=1.4em, font=\Tiny},
+  node distance=-0.2mm]
+
+  % S: initialization
+  \node [plainnode] (S0) {\type{S}};
+  \node [textnode,right=2mm of S0] (S0-0) {0};
+  \node [textnode,right=of S0-0] (S0-1) {1};
+  \node [textnode,right=of S0-1] (S0-2) {2};
+  \node [textnode,right=of S0-2] (S0-3) {3};
+  \node [textnode,right=of S0-3] (S0-4) {4};
+  \node [plainnode,right=4.8cm of S0-4] (S0-dots) {.........};
+  \node [textnode,right=4.8cm of S0-dots] (S0-253) {253};
+  \node [textnode,right=of S0-253] (S0-254) {254};
+  \node [textnode,right=of S0-254] (S0-255) {255};
+
+  % K: seed key
+  \node [plainnode,below=1cm of S0] (K) {\type{K}};
+  \node [textnode,right=2mm of K] (K-0) {};
+  \node [textnode,right=of K-0] (K-1) {};
+  \node [textnode,right=of K-1] (K-2) {};
+  \node [textnode,right=of K-2] (K-3) {};
+  \node [plainnode,right=of K-3] (K-dots) {...};
+  \node [textnode,right=of K-dots] (K-4) {};
+  \path (K-0.north west) -- (K-4.north east) node [midway,plainnode,above] (K-len) {密钥长度Length(K)};
+  \draw [name path=left-y,semithick] (K-0.north west) -- +(0, 0.5cm);
+  \path [name path=left-x] (K-len.west) -- +(-3em, 0);
+  \draw [name intersections={of=left-y and left-x,by=L}]
+    [<-,shorten <=1pt,>=stealth',semithick] (L) -- (K-len.west);
+  \draw [name path=right-y,semithick] (K-4.north east) -- +(0, 0.5cm);
+  \path [name path=right-x] (K-len.east) -- +(3em, 0);
+  \draw [name intersections={of=right-y and right-x,by=R}]
+    [->,shorten >=1pt,>=stealth',semithick] (K-len.east) -- (R);
+
+  % T: initialized by K
+  \node [plainnode,below=1.5cm of K] (T) {\type{T}};
+  \node [textnode,right=2mm of T] (T-00) {};
+  \node [textnode,right=of T-00] (T-01) {};
+  \node [textnode,right=of T-01] (T-02) {};
+  \node [textnode,right=of T-02] (T-03) {};
+  \node [plainnode,right=of T-03] (T-0dots) {...};
+  \node [textnode,right=of T-0dots] (T-04) {};
+  
+  \node [textnode,right=of T-04] (T-10) {};
+  \node [textnode,right=of T-10] (T-11) {};
+  \node [textnode,right=of T-11] (T-12) {T[i]};
+  \node [textnode,right=of T-12] (T-13) {};
+  \node [plainnode,right=of T-13] (T-1dots) {...};
+  \node [textnode,right=of T-1dots] (T-14) {};
+
+  \path [name path=T-x] (T-14.east) -- +(7.8cm,0);
+  \path [name path=S0-255-y] (S0-255.south) -- +(0,-3.5cm);
+  \node [name intersections={of=T-x and S0-255-y,by=X}][textnode] (T-24) at (X) {};
+  \node [plainnode,left=of T-24] (T-2dots) {...};
+  \node [textnode,left=of T-2dots] (T-23) {};
+  \node [textnode,left=of T-23] (T-22) {};
+  \node [textnode,left=of T-22] (T-21) {};
+  \node [textnode,left=of T-21] (T-20) {};
+  \path (T-14.east) -- (T-20.west) node [midway,plainnode] (Tdots) {......};
+
+  % K -> T
+  \foreach \i in {0,1,2,3,4} {
+    \draw [->,shorten >=1pt,>=stealth',semithick] (K-\i.south) -- (T-0\i.north);
+    \coordinate (X-\i) at ($ (K-\i.south) + (0, -\i*1.5mm-4mm) $);
+    \draw [->,shorten >=1pt,>=stealth',semithick] (X-\i) -| (T-1\i.north);
+    \coordinate (Y-\i) at ($ (X-\i) + (6cm, 0) $);
+    \draw [->,shorten >=1pt,>=stealth',semithick] (Y-\i) -| (T-2\i.north);
+  }
+
+  % calculate j
+  \node [plainnode,below=0.8cm of T-12] (j) {j := (j + S[i] + T[i]) mod 256};
+
+  % S randomization
+  \node [plainnode, below=2cm of T] (S1) {\type{S}};
+  \node [textnode,right=2mm of S1] (S1-0) {};
+  \node [textnode,right=of S1-0] (S1-1) {};
+  \node [textnode,right=of S1-1] (S1-2) {};
+  \node [textnode,right=of S1-2] (S1-3) {};
+  \node [textnode,right=of S1-3] (S1-4) {};
+  \node [plainnode,right=of S1-4] (S1-5) {};
+  \node [plainnode,right=of S1-5] (S1-6) {...};
+  \node [plainnode,right=of S1-6] (S1-7) {};
+  \node [textnode,below=2cm of T-12] (S1-i) {S[i]};
+
+  \node [textnode,below=2cm of T-24] (S1-255) {};
+  \node [textnode,left=of S1-255] (S1-254) {};
+  \node [textnode,left=of S1-254] (S1-253) {};
+  \path (S1-i.east) -- (S1-253.west) node [midway,textnode] (S1-j) {S[j]};
+  \path (S1-i.east) -- (S1-j.west) node [midway,plainnode] (S1-dots1) {...};
+  \path (S1-j.east) -- (S1-253.east) node [midway,plainnode] (S1-dots2) {...};
+  \draw [->,shorten >=1pt,>=stealth',semithick] (T-12.south) -- (j.north);
+  \draw [->,shorten >=1pt,>=stealth',semithick] (S1-i.north) -- (j.south);
+  \draw [->,shorten >=1pt,>=stealth',semithick] (j.east) -| (S1-j.north);
+  \draw [<->,shorten >=1pt,>=stealth',semithick] 
+    (S1-i.south) .. controls +(-45:1cm) and +(-135:1cm) .. (S1-j.south)
+    node [plainnode,above,midway] {交换};
+\stoptikzpicture
+}
+\stopplacefigure
+
+
+\startsubsection[title={初始化算法},reference=subsec:ksa]
+
+RC4初始化阶段，由种子密钥\type{K}对一个称之为\type{S}盒的数组进行初始化。我们用\type{Length(K)}来表示
+种子密钥的长度，并假设\type{S}盒的长度为256，RC4初始化过程可以用\in{图}[fig:rc4-init]和如下伪代码来描述。
+
+
+\startpseudocode[before={\starttextrule{\small\bf RC4初始化算法的伪代码描述}}]
+for i from 0 to 255 do
+    S[i] := i
+    T[i] := K[i mod Length(K)]
+
+j := 0
+for i from 0 to 255 do
+    j := (j + S[i] + T[i]) mod 256
+    swap values of S[i] and S[j]
+\stoppseudocode
+
+第一个\type{for}循环对\type{S}盒和数组\type{T}进行初始化。\type{S}盒中按顺序依次填入索引序号，种子
+密钥\type{K}中的字节序列依次循环填入数组\type{T}来完成对\type{T}的初始化。第二个\type{for}循环
+将\type{S}盒中的数值搅乱，\type{i}确保\type{S}中的每个元素都得到处理，\type{j}的选择通过种子密钥
+\type{K}来保证\type{S}的搅乱是随机的。
+
+\stopsubsection
+
+\startsubsection[title={伪随机密码生成算法},referenc=subsec:prga]
+
+在RC4伪随机密码生成算法阶段，基于初始化好的\type{S}盒，对明文流加密生成密文流。算法是一个迭代的过程，
+\in{图}[fig:rc4-prga]给出了一次迭代过程的示意图，整个过程用如下伪代码描述。
+
+
+\startplacefigure[title={RC4伪随机密码生成算法产生密文流的过程示意图}, reference=fig:rc4-prga]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  textnode/.style={draw=red!62.5!black, thick, fill=white!62.5!black, 
+  minimum width=1.8em, minimum height=1.4em, font=\Tiny},
+  plainnode/.style={minimum width=1.8em,minimum height=1.4em, font=\Tiny},
+  node distance=-0.2mm]
+
+  \node [plainnode] (S) {\type{S}};
+  \node [textnode,right=2mm of S] (S0) {};
+  \node [textnode,right=of S0] (S1) {};
+  \node [textnode,right=of S1] (S2) {};
+  \node [textnode,right=of S2] (S3) {};
+  \node [textnode,right=of S3] (S4) {};
+  \node [plainnode,right=0.5cm of S4] (dots1) {...};
+  \node [textnode,right=0.5cm of dots1] (Si) {S[i]};
+  \node [plainnode,right=1.5cm of Si] (dots2) {...};
+  \node [textnode,right=1.5cm of dots2] (Sj) {S[j]};
+  \node [plainnode,right=0.5cm of Sj] (dots3) {...};
+  \node [textnode,right=0.5cm of dots3] (Sk) {S[k]};
+  \node [plainnode,right=0.5cm of Sk] (dots4) {...};
+  \node [textnode,right=0.5cm of dots4] (S253) {};
+  \node [textnode,right=of S253] (S254) {};
+  \node [textnode,right=of S254] (S255) {};
+  \node [plainnode] (j) at ($ (Si.north east) + (45:1cm) $) {j := (j + S[i]) mod 256};
+  \draw [->,shorten >=1pt,>=stealth',semithick] (Si.east) -| (j.south);
+  \draw [->,shorten >=1pt,>=stealth',semithick] (j.east) -| (Sj.north);
+  \node [plainnode,below=1cm of dots2] (Sij) {k := (S[i] + S[j]) mod 256};
+  \draw [<->,shorten >=1pt,>=stealth',semithick] 
+    (Si.south) .. controls +(-30:1cm) and +(-150:1cm) .. (Sj.south)
+    node [plainnode,above,midway] {交换};
+  \draw [->,shorten >=1pt,>=stealth',semithick] 
+    ($ (Si.south) + (-2mm, 0) $) -- ($ (Sij.north) + (-2.5mm, 0) $);
+  \draw [->,shorten >=1pt,>=stealth',semithick] 
+    ($ (Sj.south) + (2mm, 0) $) -- ($ (Sij.north) + (2.5mm, 0) $);
+  \draw [->,shorten >=1pt,>=stealth',semithick] (Sij.east) -| ($ (Sk.south) + (-2mm, 0) $);
+  \node [draw=red!62.5!black,thick,fill=white!62.5!black,
+    shape=circle,below=1.5cm of Sk] (xor) {\type{+}} edge [pre] (Sk);
+  \node [textnode,left=1cm of xor] (input) {inputByte} edge [post] (xor);
+  \node [textnode,right=1cm of xor] (output) {outputByte} edge [pre] (xor);
+\stoptikzpicture
+}
+\stopplacefigure
+
+\startpseudocode[before={\starttextrule{\small\bf RC4伪随机密码生成算法的伪代码描述}}]
+i := 0
+j := 0
+while (inputByte = readByte(inStream)) != EOF:
+    i := (i + 1) mod 256
+    j := (j + S[i]) mod 256
+    swap values of S[i] and S[j]
+    k := (S[i] + S[j]) mod 256
+    outputByte = inputByte ^ S[k]
+    writeByte(outStream, outputByte)
+\stoppseudocode
+
+每次迭代从明文流中读入一个字节，迭代结束之后生成一个密文字节输出到密文流中。每次迭代过程中，
+由\type{i}和\type{j}两个指针索引\type{S}盒中相应的字节值。指针\type{i}在每次迭代前递增，
+确保\type{S}盒中的每个位置的元素都有机会参与密文字节的计算。指针\type{i}指向的\type{S}盒中的元素进一步用于
+计算指针\type{j}，用来“随机”挑选\type{S}盒中的另一个值。每次迭代，将\type{i}和\type{j}指向的\type{S}盒
+中的两个元素相互交换来进一步打乱\type{S}盒，此步操作保证每256次迭代中\type{S}盒中的每个元素至少被交换过一次。
+同时，用\type{i}和\type{j}指向的元素来计算另一个指针\type{k}，用\type{k}指向的\type{S}盒中的元素和明文流
+中的当前读入的字节进行异或计算得到密文字节，并输出到密文流中。
+
+PRGA生成密文流的过程中，只采用了异或运算，由于异或运算具有对称性，即由$a \oplus b = x$，可以得到
+$x \oplus b = a$和$x \oplus a = b$。因此，RC4解密也使用同一套算法。
+\stopsubsection
+
+\startsubsection[title={使用OpenSSL进行RC4加密},reference=subsec:openssl-rc4]
+
+OpenSSL是密码工作者和开发人员的必备利器，它是一个开放源代码的软件库包，整个软件包大概可以分成三个主要的
+功能部分：
+\startitemize[packed]
+\item openssl命令行工具
+\item libencrypt加密算法库
+\item libssl加密模块应用库
+\stopitemize
+
+作为一个基于密码学的安全开发包，OpenSSL提供的功能相当强大和全面，囊括了主要的密码算法、常用的密钥和
+证书封装管理功能以及SSL协议，并提供了丰富的应用程序供测试或其它目的使用。在介绍完每项具体的现代密码技术之后，
+本书会使用OpenSSL来展示具体的例子，帮助读者加深对密码技术的理解。
+
+在对称加密算法方面，OpenSSL一共提供了8种对称加密算法，其中7种是分组加密算法，仅有的一种流加密算法就是RC4。
+下面展示用OpenSSL命令行工具完成RC4的加密和解密。
+
+首先，我们使用\type{openssl}对字符串\type{hello}进行加密，指定加密算法为RC4。
+
+\startshellcode
+root@localhost:~# echo -ne "hello" | openssl enc -rc4 -K "DEADBEEF" -e -nosalt -p -out hello.rc4
+key=DEADBEEF000000000000000000000000
+\stopshellcode
+
+\type{echo}命令输出的字符串\type{hello}通过管道传给\type{openssl}作为输入的明文字符串被加密，\type{-ne}
+选项控制\type{echo}输出的字符串最后不自动添加换行符。\type{openssl}的\type{enc}子命令用于加密，这里，
+我们通过\type{-rc4}选项指定了RC4算法，并指定了密钥是\type{DEADBEEF}，\type{openssl}会自动将密钥长度补齐
+到128个比特位。\type{-e}是控制加密的选项参数，\type{-nosalt}表示不给密码加盐（后面，我们会详细讨论加盐密码）。
+\type{-out}将加密后的密文输出到指定的文件中。
+
+接下来，我们来看一下加密后的密文到底长得啥样。
+
+\startshellcode
+root@localhost:~# cat hello.rc4 | xxd
+00000000: 7d5c e5fc 3b                             }\..;
+\stopshellcode
+
+我们将\type{hello.rc4}密文文件的内容读出来，并用\type{xxd}显示十六进制格式的密文字节，可以看到密文中有5个字节，
+依次对应明文\type{hello}的5个字符。
+
+最后，我们继续使用\type{openssl}命令对密文文件进行解密，并将解密后的结果输出到屏幕终端上。
+
+\startshellcode
+root@localhost:~# openssl enc -rc4 -K "DEADBEEF" -d -nosalt -p -in hello.rc4
+key=DEADBEEF000000000000000000000000
+hello
+\stopshellcode
+
+在命令行中，我们使用\type{-d}选项来表明解密操作，和加密操作一样，继续指定了RC4密码算法和密钥。并用\type{-in}选项
+从文件\type{hello.rc4}中读入密文，最终还原出明文字符串\type{hello}。
+
+\stopsubsection
+
+\startsubsection[title={针对RC4的破解},reference=subsec:crack-rc4]
+
+RC4算法是对称的加密算法，加密和解密的步骤都是众所周知的、固定不变的。唯一的保密性来自于种子密钥。理论上，
+这个种子密钥只有通讯双方知道，但是如果第三方从某种途径获得了这个种子密钥，那么第三方可以毫不费力地用RC4来
+解密他截获到的密文了。
+
+理论上来说，RC4算法是很难被破解的。RC4中用到的种子密钥是长度在1到256之间可变的无类型字符序列，每个字节
+有256种可能的取值，那么RC4算法的种子密钥的可能性就是
+$256 + 256^2 + 256^3 + \cdots + 256^{256} \approx 256^{256}$
+种可能性，量级在$10^{600}$以上。因此，针对RC4算法的暴力破解几乎是不可能的。
+
+研究人员早前发现可以利用RC4中的统计偏差，导致可对加密信息中的一些伪随机字节能进行猜测。在2013年，科学家利用
+这个漏洞设计了一次攻击实验：他们在2000小时内猜出一个基础身份认证cookie中包含的字符。后来技术改进后，研究人员
+只需约75小时猜解就能得到$94\%$的准确率。
+
+另外，新型针对WPA-TKIP网络的猜解攻击大概只需要花上1个小时的时间，攻击者可以任意注入、解密数据包。这项技术不仅
+可以解密cookie和WiFi数据包，其他高速传输的加密数据流也有可能被解密。技术是通过向加密负载中注入数据，如每个认证
+cookie或者WiFi数据包中的标准头部。攻击者会通过组合所有可能的值，通过使用统计偏差找出最有可能的组合。研究人员
+表示，现在RC4加密已经不安全了，建议完全停止使用。在2015年由RFC~7465禁止在所有版本的TLS中使用。
+
+\stopsection
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startsection[title={分组密码：DES},reference=sec:des]
+\index{sec:des}
+
+1973年，美国国家标准局 (现在的美国国家标准技术研究所NIST, National Institute of Standards and Technology)
+开始研究除国防部外的其它部门的计算机系统的数据加密标准，于1973年5月和1974年8月先后两次向公众发出了征求加密算法的
+公告。加密算法要达到的目的主要为以下四点：
+\startitemize[packed]
+\item 提供高质量的数据保护，防止数据未经授权的泄露和未被察觉的修改； 
+\item 具有相当高的复杂性，使得破译的开销超过可能获得的利益，同时又要便于理解和掌握；
+\item 密码体制的安全性应该不依赖于算法的保密，其安全性仅以加密密钥的保密为基础；
+\item 实现经济，运行有效，并且适用于多种完全不同的应用。
+\stopitemize
+
+1977年1月，美国政府采纳IBM公司设计的方案作为非机密数据的正式数据加密标准 (DES, Data Encryption Standard)，
+DES被确定为美国联邦信息处理标准 (FIPS, Federal Information Processing Standard)，随后在国际上广泛流传开来。
+
+DES算法因为包含一些机密设计元素，相对短的密钥长度以及怀疑内含美国国家安全局 (NSA, National Security Agency) 
+的后门而在开始时有争议，DES因此受到了强烈的学院派式的审查，并以此推动了现代的块密码及其密码分析的发展。DES现在
+已经不是一种安全的加密方法，1999年1月，distributed.net与电子前哨基金会合作，在22小时15分钟内即公开破解了一个
+DES密钥。由于DES的密文可以在短时间内被破译，因此现在不应该再使用它了，在2001年，DES作为一个标准已经被AES所取代。
+
+\startsubsection[title={DES的总体结构},reference=subsec:des-structure]
+
+DES是一个分组加密算法，以64位为分组对数据加密，加密和解密用的是同一个算法。它的密钥表面上是64位的，然而只有其中
+的56位被实际用于加密计算，其余8位可以被用于奇偶校验，并在加密算法中被丢弃。因此，DES的有效密钥长度仅为56位。
+
+\startplacefigure[title={DES总体结构图},reference=fig:des]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  labelnode/.style={font=\Tiny},
+  widetextnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black, 
+  minimum width=6cm,minimum height=1.7em,font=\Tiny},
+  halftextnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black, 
+  minimum width=2.5cm,minimum height=1.7em,font=\Tiny},
+  fnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,rounded corners=5pt,
+  minimum width=8em,minimum height=1.7em,font=\Tiny},
+  pc1node/.style={draw=red!62.5!black,thick,fill=white!62.5!black,
+  shape=trapezium,trapezium left angle=120,trapezium right angle=120,trapezium stretches body,
+  minimum width=6cm,minimum height=1.7em,font=\Tiny},
+  pc2node/.style={draw=red!62.5!black,thick,fill=white!62.5!black,
+  shape=trapezium,trapezium left angle=120,trapezium right angle=120,trapezium stretches body,
+  minimum width=4cm,minimum height=1.7em,font=\Tiny},
+  ipfpnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,rounded corners=5pt,
+    minimum width=6cm,minimum height=1.7em,font=\Tiny},
+  subkeynode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,
+    minimum width=4.5em,minimum height=1.7em,font=\Tiny},
+  xornode/.style={shape=circle,draw=red!62.5!black,thick,fill=white!62.5!black,minimum size=1.7em},
+  lshiftnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,rounded corners=5pt,
+    minimum width=1cm,minimum height=1.7em,font=\Tiny},
+  plainnode/.style={minimum width=1.8em,minimum height=1.7em,font=\Tiny},
+  node distance=0.5cm]
+
+  \node [widetextnode] (input) {明文分组 (64比特)};
+  \node [ipfpnode, below=of input] (ip) {初始置换 (IP)} edge [pre] (input);
+  \coordinate (ip-lh) at ($ (ip.south west) + (0.5cm, 0) $);
+  \coordinate (ip-rh) at ($ (ip-lh) + (5cm, 0) $);
+  \node [below=1pt,labelnode] at (ip-lh) {左半分组 (32比特)};
+  \node [below=1pt,labelnode] at (ip-rh) {右半分组 (32比特)};
+
+  \node [fnode, below=1.5cm of ip] (f1) {F函数 (第1轮)};
+  \node [xornode, below=1.5cm of ip-lh] (xor1) {\type{+}} edge [pre] (f1);
+  \coordinate (xor1-up) at ($ (xor1.north) + (0,0.5cm) $);
+  \coordinate (xor1-down) at ($ (xor1.south) + (0,-0.5cm) $);
+  \coordinate (f1-up) at ($ (xor1-up) + (5cm, 0) $);
+  \coordinate (f1-down) at ($ (xor1-down) + (5cm, 0) $);
+
+  \node [fnode, below=2cm of f1] (f2) {F函数 (第2轮)};
+  \node [xornode, below=2cm of xor1] (xor2) {\type{+}} edge [pre] (f2);
+  \coordinate (xor2-up) at ($ (xor2.north) + (0,0.5cm) $);
+  \coordinate (xor2-down) at ($ (xor2.south) + (0,-0.5cm) $);
+  \coordinate (f2-up) at ($ (xor2-up) + (5cm, 0) $);
+  \coordinate (f2-down) at ($ (xor2-down) + (5cm, 0) $);
+
+  \node [fnode, below=2cm of f2] (f16) {F函数 (第16轮)};
+  \node [xornode, below=2cm of xor2] (xor16) {\type{+}} edge [pre] (f16);
+  \coordinate (xor16-up) at ($ (xor16.north) + (0,0.5cm) $);
+  \coordinate (xor16-down) at ($ (xor16.south) + (0,-0.5cm) $);
+  \coordinate (f16-up) at ($ (xor16-up) + (5cm, 0) $);
+  \coordinate (f16-down) at ($ (xor16-down) + (5cm, 0) $);
+
+  \node [ipfpnode, below=of f16] (fp) {最终置换 (FP)};
+  \node [widetextnode, below=of fp] (output) {密文分组 (64比特)} edge [pre] (fp);
+
+  \draw [post] (ip-lh) -- (xor1.north);
+  \draw [post] (ip-rh) |- (f1.east);
+
+  \draw [post] (xor1.south) -- (xor1-down) -- (f2-up) |- (f2.east);
+  \draw [post] (f1-up) -- (f1-down) -- (xor2-up) -- (xor2.north);
+
+  \draw [semithick,loosely dash dot dot] (xor2.south) -- (xor2-down) -- (f16-up);
+  \draw [post] (f16-up) |- (f16.east);
+  \draw [semithick,loosely dash dot dot] (f2-up) -- (f2-down) -- (xor16-up);
+  \draw [post] (xor16-up) -- (xor16.north);
+
+  \draw [post] (xor16.south) -- +(0,-0.5cm);
+  \draw [post] (f16-up) -- (f16-down);
+
+  \node [widetextnode, right=2.5cm of input] (key) {密钥 (64比特)};
+  \node [pc1node, below=of key] (pc1) {PC-1置换} edge [pre] (key);
+  \coordinate (Loc-L1) at ($ (pc1.bottom left corner) + (0.5cm, -0.75cm) $);
+  \coordinate (Loc-R1) at ($ (pc1.bottom right corner) + (-0.5cm, -0.75cm) $);
+  \node at (Loc-L1) [lshiftnode] (L1) {左移};
+  \node at (Loc-R1) [lshiftnode] (R1) {左移};
+  \draw [post] ($ (pc1.bottom left corner) + (0.5cm, 0) $) -- node[labelnode]{左半部分 (28比特)} (L1.north);
+  \draw [post] ($ (pc1.bottom right corner) + (-0.5cm, 0) $) -- node[labelnode]{右半部分 (28比特)} (R1.north);
+  \node [pc2node, below=1.6cm of pc1] (pc2-1) {PC-2置换 (第1轮)};
+  \coordinate (Loc-K1) at ($ (L1.south west) + (-1cm, -0.4cm) $);
+  \node at (Loc-K1) [subkeynode] (K1) {子密钥K1};
+  \draw [post] (L1.south) -- ++(0, -0.3cm) -- ++(1cm, 0) -- ++(0, -0.3cm);
+  \draw [post] (R1.south) -- ++(0, -0.3cm) -- ++(-1cm, 0) -- ++(0, -0.3cm);
+  \draw [post] (pc2-1.south) -- ++(0, -0.4cm) node[plainnode,midway,left=1pt] {48比特} -| (K1.south);
+
+  \node [lshiftnode, below=2cm of L1] (L2) {左移} edge [pre] (L1);
+  \node [lshiftnode, below=2cm of R1] (R2) {左移} edge [pre] (R1);
+  \node [pc2node, below=2cm of pc2-1] (pc2-2) {PC-2置换 (第2轮)};
+  \node [subkeynode, below=2cm of K1] (K2) {子密钥K2};
+  \draw [post] (L2.south) -- ++(0, -0.3cm) -- ++(1cm, 0) -- ++(0, -0.3cm);
+  \draw [post] (R2.south) -- ++(0, -0.3cm) -- ++(-1cm, 0) -- ++(0, -0.3cm);
+  \draw [post] (pc2-2.south) -- ++(0, -0.4cm) node[plainnode,midway,left=1pt] {48比特} -| (K2.south);
+
+  \node [lshiftnode, below=2cm of L2] (L16) {左移} edge [pre,loosely dash dot dot] (L2);
+  \node [lshiftnode, below=2cm of R2] (R16) {左移} edge [pre,loosely dash dot dot] (R2);
+  \node [pc2node, below=2cm of pc2-2] (pc2-16) {PC-2置换 (第16轮)};
+  \node [subkeynode, below=2cm of K2] (K16) {子密钥K16};
+  \draw [post] (L16.south) -- ++(0, -0.3cm) -- ++(1cm, 0) -- ++(0, -0.3cm);
+  \draw [post] (R16.south) -- ++(0, -0.3cm) -- ++(-1cm, 0) -- ++(0, -0.3cm);
+  \draw [post] (pc2-16.south) -- ++(0, -0.4cm) node[plainnode,midway,left=1pt] {48比特} -| (K16.south);
+  \draw [post] (K1.north) -- +(0,0.5cm) -| (f1.north);
+  \draw [post] (K2.north) -- +(0,0.5cm) -| (f2.north);
+  \draw [post] (K16.north) -- +(0,0.5cm) -| (f16.north);
+\stoptikzpicture
+}
+\stopplacefigure
+
+算法的整体结构如\in{图}[fig:des]所示。在DES加密的过程中 (图的左半部分)，有16个相同的被称为
+{\it 轮} (round) 的处理过程，并在首尾各有一次置换，分别称为初始置换 (IP, Initial Permutation)与
+最终置换 (FP, Final Permutation)。首尾两次置换是互逆的，即\type{FP}可以还原\type{IP}置换后的原始
+数据分组，反之亦然。
+
+64位的数据分组在进入第一轮处理之前，被分成两个32位的半块分别处理。随后，每轮处理完后，左右两个半块交叉
+作为下一轮处理的输入，这种交叉的方式被称为或者Feistel网络。Feistel网络中每轮处理的\type{F}函数将
+数据半块与某个子密钥进行处理。然后，\type{F}函数的输出与另一个半块进行异或操作之后，再与未被处理的
+半块交叉作为下一轮的处理的两个输入半块。这种结构保证了加密和解密过程足够相似——唯一的区别在于子密钥
+在解密时是以反向的顺序作用的，而剩余部分均相同。这样的设计大大简化了算法的实现，尤其是硬件实现，因为
+不需要区分加密和解密算法。
+ 
+Feistel网络中每轮处理所需要的子密钥由密钥调度算法根据密钥生成 (图的右半部分)。下面，对DES每个处理
+的细节一一进行详细的介绍。
+
+\startplacefigure[title={初始置换函数和最终置换函数},reference=fig:des-ipfp]
+\startcombination[1*2]{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  labelnode/.style={font=\Tiny},
+  bodynode/.style={draw=red!62.5!black,thick,fill=white!62.5!black, 
+  minimum width=11cm,minimum height=1.2cm},
+  pinnode/.style={draw=red!62.5!black,thick,fill=yellow!62.5!black, 
+  minimum width=2mm,minimum height=2mm},
+  labelnode/.style={font=\Tiny},
+  node distance=0.2cm]
+  
+  \node [bodynode] at (5.5cm,0.6cm) {};
+  \foreach \i in {0,1,2,...,21} {
+    \ifnum \i < 2
+      \node [pinnode] (in-\i) at (0.25cm+\i*0.5cm,1.2cm) {};
+      \node [pinnode] (out-\i) at (0.25cm+\i*0.5cm,0) {};
+    \else
+      \pgfmathmod{\i-2}{4}
+      \let\m\pgfmathresult
+      \pgfmathparse{int(\m)}
+      \let\r\pgfmathresult
+      \ifnum \r = 1
+        \node [labelnode] at (0.25cm+\i*0.5cm, 1.4cm) {\dots};
+        \node [labelnode] at (0.25cm+\i*0.5cm, -0.2cm) {\dots};
+      \else
+        \ifnum \r = 3
+          \node [pinnode] (in-\i) at (0.25cm+\i*0.5cm,1.2cm) {};
+          \node [pinnode] (out-\i) at (0.25cm+\i*0.5cm,0) {};
+        \fi
+      \fi
+    \fi
+  }
+
+  \foreach \i/\b in {0/1,1/2,5/8,9/25,13/40,17/58,21/64} {
+    \node [labelnode,above=of in-\i] (bin-\b) {\b} edge [semithick] (in-\i);
+    \node [labelnode,below=of out-\i] (bout-\b) {\b} edge [semithick] (out-\i);
+  }
+
+  \draw [post] (in-0.south) -- +(0,-2mm) -- ($ (out-13.north) + (0,3mm) $) -- (out-13.north);
+  \draw [post] (in-1.south) -- +(0,-2mm) -- ($ (out-5.north) + (0,3mm) $) -- (out-5.north);
+  \draw [post] (in-17.south) -- +(0,-2mm) -- ($ (out-0.north) + (0,3mm) $) -- (out-0.north);
+  \draw [post] (in-21.south) -- +(0,-2mm) -- ($ (out-9.north) + (0,3mm) $) -- (out-9.north);
+\stoptikzpicture
+}{\Tiny 初始置换函数IP}
+{
+  \starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  labelnode/.style={font=\Tiny},
+  bodynode/.style={draw=red!62.5!black,thick,fill=white!62.5!black, 
+  minimum width=11cm,minimum height=1.2cm},
+  pinnode/.style={draw=red!62.5!black,thick,fill=yellow!62.5!black, 
+  minimum width=2mm,minimum height=2mm},
+  labelnode/.style={font=\Tiny},
+  node distance=0.2cm]
+  
+  \node [bodynode] at (5.5cm,0.6cm) {};
+  \foreach \i in {0,1,2,...,21} {
+    \ifnum \i < 2
+      \node [pinnode] (in-\i) at (0.25cm+\i*0.5cm,1.2cm) {};
+      \node [pinnode] (out-\i) at (0.25cm+\i*0.5cm,0) {};
+    \else
+      \pgfmathmod{\i-2}{4}
+      \let\m\pgfmathresult
+      \pgfmathparse{int(\m)}
+      \let\r\pgfmathresult
+      \ifnum \r = 1
+        \node [labelnode] at (0.25cm+\i*0.5cm, 1.4cm) {\dots};
+        \node [labelnode] at (0.25cm+\i*0.5cm, -0.2cm) {\dots};
+      \else
+        \ifnum \r = 3
+          \node [pinnode] (in-\i) at (0.25cm+\i*0.5cm,1.2cm) {};
+          \node [pinnode] (out-\i) at (0.25cm+\i*0.5cm,0) {};
+        \fi
+      \fi
+    \fi
+  }
+
+  \foreach \i/\b in {0/1,1/2,5/8,9/25,13/40,17/58,21/64} {
+    \node [labelnode,above=of in-\i] (bin-\b) {\b} edge [semithick] (in-\i);
+    \node [labelnode,below=of out-\i] (bout-\b) {\b} edge [semithick] (out-\i);
+  }
+
+  \draw [post] (in-0.south) -- +(0,-2mm) -- ($ (out-17.north) + (0,3mm) $) -- (out-17.north);
+  \draw [post] (in-5.south) -- +(0,-2mm) -- ($ (out-1.north) + (0,3mm) $) -- (out-1.north);
+  \draw [post] (in-9.south) -- +(0,-2mm) -- ($ (out-21.north) + (0,3mm) $) -- (out-21.north);
+  \draw [post] (in-13.south) -- +(0,-2mm) -- ($ (out-0.north) + (0,3mm) $) -- (out-0.north);
+\stoptikzpicture
+}{\Tiny 最终置换函数FP}
+\stopcombination
+\stopplacefigure
+
+\startsubsection[title={初始置换\type{IP}和最终置换\type{FP}},reference=subsec:permutation]
+
+64位明文分组经过初始置换函数\type{IP}，生成重新排列之后的64位数据分组。如\in{图}[fig:des-ipfp]所示，
+这个初始置换函数对明文分组的64个比特重新排列。排列后的数据分组分成左右两个各32位的半块，经过Feistel网络
+中16轮\type{F}函数的运算，最后进入最终置换函数\type{FP}再次重新排列，输出64位密文分组。
+由\in{图}[fig:des-ipfp]可以看出，\type{IP}和\type{FP}是互逆的，这就满足了加密和解密对称性的必要条件。
+
+\startsubsection[title={Feistel网络},reference=subsec:feistel]
+
+从\in{图}[fig:des]所示的DES的总体结构图中，我们了解到明文分组经过初始置换之后，分成两个32位的半块进入
+Feistel网络。Feistel网络是由16轮\type{F}函数串联组成的计算过程。在Feistel网络中，每一轮都需要
+使用一个不同的子密钥，我们会随后的\in{}[subsec:subkeys]密钥调度这一小节再详细介绍子密钥的生成算法。
+这里，我们要注意的是，每一轮子密钥的长度均为48位，它和32位的右半块作为\type{F}函数的输入，经过计算处理
+输出长32位的比特序列再和32位的左半块进行异或计算。该异或计算得到的32位比特序列，在进入下一轮处理之前和
+右半块进行对调。
+
+总结一下，一轮的具体计算步骤如下：
+\startitemize[n,packed]
+\item 将输入数据分组分成左右两个均为32位的半块。
+\item 右半块不经任何处理直接作为\type{F}函数的输入。
+\item \type{F}函数根据右半块和该轮子密钥，计算出长32位的比特序列。
+\item 将上一步得到的比特序列和左半块进行异或计算，其结果作为下一轮处理的右半块。
+\item 该轮右半块不经任何处理直接发送到下一轮，作为下一轮处理的左半块。
+\stopitemize
+
+% 图2中显示了費斯妥函数（F函数）的过程。其每次对半块（32位）进行操作，并包括四个步骤：
+% 图2—DES的費斯妥函数（F函数）
+
+%     扩张—用扩张置换（图中的E）将32位的半块扩展到48位，其输出包括8个6位的块，每块包含4位对应的输入位，加上两个邻接的块中紧邻的位。
+%     与密钥混合—用异或操作将扩张的结果和一个子密钥进行混合。16个48位的子密钥—每个用于一个回次的F变换—是利用密钥调度从主密钥生成的（见下文）。
+%     S盒—在与子密钥混合之后，块被分成8个6位的块，然后使用“S盒”，或称“置换盒”进行处理。8个S盒的每一个都使用以查找表方式提供的非线性的变换将它的6个输入位变成4个输出位。S盒提供了DES的核心安全性—如果没有S盒，密码会是线性的，很容易破解。
+%     置换—最后，S盒的32个输出位利用固定的置换，“P置换”进行重组。这个设计是为了将每个S盒的4位输出在下一回次的扩张后，使用4个不同的S盒进行处理。
+
+% S盒，P置换和E扩张各自满足了克劳德·香农在1940年代提出的实用密码所需的必要条件，“混淆与扩散”。 
+
+
+\startsubsection[title={密钥调度},reference=subsec:subkeys]
+
 
 
 \stopsection
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\startsection[title={3DES}]
-\index{3des}
+\startsection[title={分组密码：3DES},reference=sec:3des]
+\index{sec:3des}
 
 \stopsection
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\startsection[title={AES}]
-\index{aes}
+\startsection[title={分组密码：AES},reference=sec:aes]
+\index{sec:aes}
+
+
+\stopsection
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\startsection[title={分组密码：Blowfish},reference=sec:blowfish]
+\index{sec:blowfish}
+
 
 \stopsection
 
