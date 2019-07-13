@@ -2,3 +2,5 @@
 *.log
 *.tuc
 *.pgf
+
+.DS_Store
