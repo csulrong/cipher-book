@@ -1,0 +1,180 @@
+\startcomponent concept
+
+\startsection[title={密码学中的基本概念}]
+\index{concept}
+
+信息在人与人、人与机器、机器与机器之间交互的过程中存在被第三方（人或计算机）窃取的风险，密码技术提供了信息在通信双方交互
+的过程中免遭第三方窃取并破解，以及确保通信任何一方不被欺骗的一系列算法。
+
+首先，我们来了解一下与密码技术有关的角色：
+
+\startitemize
+\item {\it 发送者} (sender)：消息的发送方。
+\item {\it 接收者} (receiver)：消息的接收方。
+\item {\it 窃听者} (eavesdropper)：监听在消息传送的通道上，窃取消息的恶意攻击方。
+\item {\it 破译者} (cryptanalyst)：为研究密码强度而工作的密码破译人员或密码学研究者，要注意和窃听者的本质区别。
+\stopitemize
+
+
+\startplacefigure
+  [title={消息的发送、接收和窃听},reference=fig:cipher-roles]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick}]
+
+  % sender
+  \node (sender picture) {\externalfigure[sender][type=eps,height=1cm]};
+  \node [font=\Tiny, below=0.1mm of sender picture] (sender picture label) {发送者};
+  \node [right=of sender picture] (sender message picture) 
+    {\externalfigure[text][type=eps,height=1cm]}
+    edge [pre] (sender picture);
+  \node [font=\Tiny, below=0.1mm of sender message picture] (sender message label) {消息};
+
+  % channel
+  \node [shape=cylinder, aspect=0.25, draw=red!62.5!black, thick, 
+    cylinder uses custom fill,
+    cylinder body fill=white!62.5!black, 
+    cylinder end fill=white!50!black,
+    inner xsep=8mm, inner ysep=2mm, 
+    right=1.5cm of sender message picture] (channel) {传输通道}
+    edge [pre] (sender message picture);
+
+  % receiver
+  \node [right=1.5cm of channel] (receiver message picture) 
+    {\externalfigure[text][type=eps,height=1cm]}
+    edge [pre] (channel);
+  \node [font=\Tiny,below=0.1mm of receiver message picture] (receiver message label) {消息};
+  \node [right=of receiver message picture] (receiver picture) 
+    {\externalfigure[receiver][type=eps,height=1cm]}
+    edge [pre] (receiver message picture);
+  \node [font=\Tiny,below=0.1mm of receiver picture] (receiver picture label) {接收者};
+  
+  % eavasdropper
+  \node [below=2cm of channel] (intercept message picture)
+    {\externalfigure[text][type=eps,height=1cm]}
+    edge [pre, dashed] (channel);
+  \node [font=\Tiny,below=0.1mm of intercept message picture] (intercept message label) {消息};
+  \node [right=of intercept message picture] (eavasdropper picture)
+    {\externalfigure[eavasdropper][type=eps,height=1cm]}
+    edge [pre] (intercept message picture);
+  \node [font=\Tiny,below=0.1mm of eavasdropper picture] (eavasdropper picture label) {窃听者};
+
+  \startscope [on background layer]
+    \node
+    [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=0.6cm, 
+     rounded corners, 
+     fit=(sender picture) (sender picture label) (sender message picture) (sender message label)] {};
+  \stopscope
+
+  \startscope [on background layer]
+    \node
+    [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=0.6cm, 
+    rounded corners, 
+    fit=(receiver picture) (receiver picture label) (receiver message picture) (receiver message label)] {};
+  \stopscope
+
+  \startscope [on background layer]
+    \node
+    [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=0.6cm, 
+    rounded corners, 
+    fit=(eavasdropper picture) (eavasdropper picture label) (intercept message picture) (intercept message label)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+如\in{图}[fig:cipher-roles]所示，如果发送者不对要发送出去的消息进行任何处理，很容易被窃听者窃取并获知消息的内容。
+为确保消息的机密性 (confidentiality)，发送者在发送消息之前需要对其进行加密 (encryption)。消息可以是任何类型的数据，
+例如，邮件、文档和交易等。通常，我们把加密前的消息称之为{\it 明文} (plaintext)，加密之后的消息称之为{\it 密文}
+ (ciphertext)。接收者收到密文后将其恢复回明文的过程称为解密 (decryption)。
+ 
+因为加密和解密需要相应的密钥才能完成，当窃听者窃取到加密后的密文之后，因为没有密钥，也就无法还原出原始的明文。这就相当
+于，我们在把重要的机密文件传给接收人之前，先把机密文件锁在保险柜里面，然后把保险柜交给物流公司帮忙交付给接收人，接收人
+收到之后用保险柜的钥匙打开取出该机密文件。在物流运输的过程中，保险柜有可能面临被丢失的风险，如果有人偷盗了保险柜，因为
+没有钥匙也无法取出里面的文件。整个过程可以用\in{图}[fig:encrypt-decrypt]来描述。
+
+\startplacefigure
+[title={消息加密和解密的过程},reference=fig:encrypt-decrypt]
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  node distance=0.5cm]
+
+  % sender
+  \node (sender picture) {\externalfigure[sender][type=eps,height=1cm]};
+  \node [font=\Tiny, below=0.1mm of sender picture] (sender picture label) {发送者};
+  \node [right=of sender picture] (sender message picture) 
+    {\externalfigure[text][type=eps,height=1cm]}
+    edge [pre] (sender picture);
+  \node [font=\Tiny, below=0.1mm of sender message picture] (sender message label) {明文};
+  \node [right=of sender message picture] (encrypt) 
+    {\externalfigure[lock][type=eps,height=1cm]}
+    edge [pre] (sender message picture);
+  \node [font=\Tiny, below=0.1mm of encrypt] (encrypt label) {加密};
+
+  % channel
+  \node [shape=cylinder, aspect=0.25, draw=red!62.5!black, thick, 
+    cylinder uses custom fill,
+    cylinder body fill=white!62.5!black, 
+    cylinder end fill=white!50!black,
+    inner xsep=5mm, inner ysep=2mm, 
+    label=above:{\Tiny 传输通道},
+    right=1.5cm of encrypt] (channel) {
+      \externalfigure[file-locked][type=eps,height=0.8cm]
+    }
+    edge [pre] (encrypt);
+
+  % receiver
+  \node [right=1.5cm of channel] (decrypt) {\externalfigure[unlock][type=eps,height=1cm]}
+    edge [pre] (channel);
+  \node [font=\Tiny,below=0.1mm of decrypt] (decrypt label) {解密};
+  \node [right=of decrypt] (receiver message picture) 
+    {\externalfigure[text][type=eps,height=1cm]}
+    edge [pre] (decrypt);
+  \node [font=\Tiny,below=0.1mm of receiver message picture] (receiver message label) {明文};
+  \node [right=of receiver message picture] (receiver picture) 
+    {\externalfigure[receiver][type=eps,height=1cm]}
+    edge [pre] (receiver message picture);
+  \node [font=\Tiny,below=0.1mm of receiver picture] (receiver picture label) {接收者};
+
+  % eavasdropper
+  \node [below=2cm of channel] (intercept message picture)
+    {\externalfigure[file-locked][type=eps,height=1cm]}
+    edge [pre, dashed] (channel);
+  \node [font=\Tiny,below=0.1mm of intercept message picture] (intercept message label) {密文};
+  \node [right=of intercept message picture] (eavasdropper picture)
+    {\externalfigure[eavasdropper][type=eps,height=1cm]}
+    edge [pre] (intercept message picture);
+  \node [font=\Tiny,below=0.1mm of eavasdropper picture] (eavasdropper picture label) {窃听者};
+  \node [ellipse callout, right=1mm of eavasdropper picture.north east, draw=red!62.5!black, thick, font=\Tiny,
+    callout absolute pointer={(eavasdropper picture.east)}] (question) {到底是啥呢？};
+
+  \startscope [on background layer]
+    \node
+    [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=0.2cm, 
+    rounded corners, 
+    fit=(sender picture) (sender picture label) (sender message picture) (sender message label) (encrypt) (encrypt label)] {};
+  \stopscope
+
+  \startscope [on background layer]
+    \node
+    [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=0.2cm, 
+    rounded corners, 
+    fit=(receiver picture) (receiver picture label) (receiver message picture) (receiver message label) (decrypt) (decrypt label)] {};
+  \stopscope
+
+  \startscope [on background layer]
+    \node
+    [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=0.2cm, 
+    rounded corners, 
+    fit=(eavasdropper picture) (eavasdropper picture label) (intercept message picture) (intercept message label) (question)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+\stopsection
+
+\stopcomponent

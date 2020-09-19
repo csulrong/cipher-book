@@ -1,0 +1,112 @@
+\startcomponent yinfu
+
+\startsection[title={中国古代人民怎么加密？}]
+
+早期加密算法主要使用在军事中，中国历史上最早关于加密算法的记载出自于周朝兵书《六韬·龙韬》中的《阴符》和《阴书》。
+其中《阴符》记载了：
+
+\startquotation
+{\it
+太公曰：“主与将，有阴符，凡八等。有大胜克敌之符，长一尺。破军擒将之符，长九寸。降城得邑之符，长八寸。却敌报远之符，
+长七寸。警众坚守之符，长六寸。请粮益兵之符，长五寸。败军亡将之符，长四寸。失利亡士之符，长三寸。诸奉使行符，稽留，
+若符事闻，泄告者，皆诛之。八符者，主将秘闻，所以阴通言语，不泄中外相知之术。敌虽圣智，莫之能识。”
+}
+\stopquotation
+
+简单来说，阴符是以八等长度的符来表达不同的消息和指令，属于密码学中的替代法（\in{图}[fig:cipher-yinfu]），在应用
+中是把信息转变成敌人看不懂的符号，但知情者知道这些符号代表的含义。
+
+\startplacefigure
+  [title={阴符所蕴含的加密原理：替换法}, reference=fig:cipher-yinfu]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  textnode/.style={draw=red!62.5!black, thick, fill=white!62.5!black, inner sep=2mm, font=\Tiny},
+  node distance=3mm]
+
+  \node [textnode] (dskd) {大胜克敌};
+  \node [textnode, right=of dskd] (pjqj) {破军擒将};
+  \node [textnode, right=of pjqj] (xcdy) {降城得邑};
+  \node [textnode, right=of xcdy] (qdby) {却敌报远};
+  \node [textnode, right=of qdby] (jzjs) {警众坚守};
+  \node [textnode, right=of jzjs] (qlyb) {请粮益兵};
+  \node [textnode, right=of qlyb] (bjwj) {败军亡将};
+  \node [textnode, right=of bjwj] (slwt) {失利亡士}; 
+
+  \node [textnode, below=1cm of dskd] (yichi)  {符长一尺} edge [pre] (dskd);
+  \node [textnode, below=1cm of pjqj] (jiucun) {符长九寸} edge [pre] (pjqj);
+  \node [textnode, below=1cm of xcdy] (bacun)  {符长八寸} edge [pre] (xcdy);
+  \node [textnode, below=1cm of qdby] (qicun)  {符长七寸} edge [pre] (qdby);
+  \node [textnode, below=1cm of jzjs] (liucun) {符长六寸} edge [pre] (jzjs);
+  \node [textnode, below=1cm of qlyb] (wucun)  {符长五寸} edge [pre] (qlyb);
+  \node [textnode, below=1cm of bjwj] (sicun)  {符长四寸} edge [pre] (bjwj);
+  \node [textnode, below=1cm of slwt] (sancun) {符长三寸} edge [pre] (slwt);
+
+  \startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, inner sep=0.5cm, 
+  rounded corners, 
+  fit=(dskd) (sancun)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+阴符只能表述最关键的八种信号，无法表达丰富的含义和传递更具体的消息。所以，《阴书》又作了补充：
+
+\startquotation
+{
+\it
+武王问太公曰：“引兵深入诸侯之地，主将欲合兵，行无穷之变，图不测之利，其事烦多，符不能明；相去辽远，言语不通。为之
+奈何？” 太公曰：“诸有阴事大虑，当用书，不用符。主以书遗将，将以书问主。书皆一合而再离，三发而一知。再离者，分书为
+三部。三发而一知者，言三人，人操一分，相参而不相知情也。此谓阴书。敌虽圣智，莫之能识。”
+}
+\stopquotation
+
+阴书作为阴符的补充，所有密谋大计，都应当用阴书，而不用阴符。国君用阴书向主将传达指示，主将用阴书向国君请示问题，这种
+阴书都是一合而再离（把一封书信分为三个部分）、三发而一知（派三个人送信，每人负责其中的一部分）。阴书运用了文字拆分法
+直接把一份文字拆成三份（\in{图}[fig:cipher-yinshu]），由三种渠道发送到目标方手中。敌人只有同时截获三份内容才可能
+破解阴书上写的内容。
+
+\startplacefigure
+  [title={阴书所蕴含的加密原理：文字分拆法}, reference=fig:cipher-yinshu]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  textnode/.style={draw=red!62.5!black, thick, fill=white!62.5!black, inner sep=2mm, font=\Tiny},
+  node distance=1cm]
+
+  \node [textnode] (mmdj) {密谋大计};
+  \node [textnode, below=of mmdj]  (mmdj2) {密谋大计第2部分} edge [pre] (mmdj);
+  \node [textnode, left=of mmdj2]  (mmdj1) {密谋大计第1部分} edge [pre] (mmdj);
+  \node [textnode, right=of mmdj2] (mmdj3) {密谋大计第3部分} edge [pre] (mmdj);
+
+  \startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, inner sep=0.5cm, 
+  rounded corners, 
+  fit=(mmdj) (mmdj1) (mmdj2) (mmdj3)] {};
+  \stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+无论是阴符，还是阴书，都有着一定的局限性。一是有可能被对方截获而难以达到传递消息的目的，二是有可能被对方破译内容并被
+对方将计就计加以利用。因此，并不是“敌虽圣智，莫之能识”。张献忠袭取襄阳就说明了这一点。
+
+崇祯十三年七月，张献忠率领起义军突破明军防线，进入四川，杨嗣昌亦率明军十万尾随追击。面对强敌，张献忠挥师东进，于次年
+二月进入湖北兴山、当阳。在东进途中，起义军活捉了由襄阳（今湖北襄樊市）回四川的杨嗣昌的军使。张献忠从其口中得知杨嗣昌
+大营所在地襄阳城防空虚，决定奔袭襄阳。他杀掉使者，搜出所携带的兵符，挑选了二十八名起义军战士，换上明军的衣服，持兵符
+先行。张献忠自己则亲率二千精骑，随后跟进，一昼夜急行三百里，直扑襄阳。伪装成明军的起义军士兵到达襄阳时正是夜间，他们
+自称是督师杨嗣昌派来调运军械的，并出示兵符。守城明军用小筐吊上兵符，细心查验，完全吻合，才命开门放入。城门刚打开，
+二十八名起义军战士一涌而入，挥刀砍杀守门明军，占领城门。张献忠率领的后续部队恰好赶到，顺利入城。一时杀声震天，明军
+惊慌失措，被迫投降。起义军杀死襄王朱翊铭，降俘明军数千人，占领襄阳，杨嗣昌闻讯呕血而死。此战表明，无论是阴符还是阴书，
+都不是万无一失的。
+
+\stopsection
+
+\stopcomponent

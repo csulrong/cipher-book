@@ -11,6 +11,10 @@
 \usesymbols[mvs]
 \setupsymbolset[martinvogel 2]
 
+\usemodule[amsl]
+\usemodule[math-ligatures]
+% \showmathligatures
+
 % custom font sizes
 \definefont[Normal]  [Regular*default at 10pt]
 \definefont[Small]   [Regular*default at 8pt]
@@ -50,7 +54,7 @@
 \usetikzlibrary
   [arrows,decorations.pathmorphing,math,calc,intersections,through,
   shapes.geometric,shapes.callouts,shapes.arrows,shadings,
-  backgrounds,positioning,fit,mindmap,shadows]
+  backgrounds,positioning,fit,mindmap,shadows,matrix,topaths]
 
 % https://wiki.contextgarden.net/Modules/t-vim
 \usemodule[vim]
@@ -103,10 +107,10 @@
 
         \includeMPgraphic{cover page}
 
-        picture p ; p := image (draw rawtextext("\darkred 轻松理解密码技术"   )) ;
+        picture p ; p := image (draw rawtextext("\darkred 加密技术：从理论到实践"   )) ;
         picture q ; q := image (draw rawtextext("\darkred\definedfont[Sans]荣亮（著）")) ;
     %   picture r ; r := image (draw rawtextext("\darkred\definedfont[Sans]\doifnotmode{book}{context mkiv}")) ;
-        picture r ; r := image (draw rawtextext("\darkred\definedfont[Sans]预览版")) ;
+        picture r ; r := image (draw rawtextext("\darkred\definedfont[Sans]第一卷：算法篇")) ;
 
         p := p xsized(PaperHeight - 2cm) ;
         q := q xsized(PaperWidth  - 8cm) ;

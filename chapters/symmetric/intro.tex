@@ -1,0 +1,42 @@
+\startcomponent intro
+
+古典加密算法那些针对字符进行转换的加密方式在计算机技术所主导的信息时代已经没什么实用价值了。计算机的操作对象并非
+针对文字，而是由0和1组成的比特序列。无论是文字、图像、声音、视频还是程序，在计算机中都是用比特序列来表示的。将
+这些现实世界中的东西转换成比特序列的操作被称为{\it 编码} (encoding)。现代加密技术是以编码后的比特序列为基本
+加密单元的。现代加密算法总体上分为两大类：{\it 对称加密算法}和{\it 非对称加密算法}，如\in{图}[fig:modern]所示。
+
+\startplacefigure[title={现代加密算法}, reference=fig:modern]
+\midaligned{
+\starttikzpicture
+[edge from parent fork down, level distance=15mm,
+level 1/.style={sibling distance=60mm},
+level 2/.style={sibling distance=50mm},
+level 3/.style={sibling distance=15mm},
+every node/.style={fill=white!62.5!black,draw=red!62.5!black,thick,rounded corners,font=\Tiny},
+edge from parent/.style={red!62.5!black,-o,thick,draw}]
+\node {现代密码算法}
+child {node {对称加密算法}
+  child {node {分组密码}
+    child {node {DES算法}}
+    child {node {3DES算法}}
+    child {node {AES算法}}
+    child {node {Blowfish算法}}
+  }
+  child {node {流密码}
+    child {node {RC4算法}}
+    child {node {SEAL算法}}
+  }
+}
+child {node {非对称加密算法}
+  child[sibling distance=17mm] {node {RSA算法}}
+  child[sibling distance=17mm] {node {EIGamal算法}}
+  child[sibling distance=17mm] {node {ECC算法}}
+};
+\stoptikzpicture
+}
+\stopplacefigure
+
+其中，对称加密算法还分为流密码和分组密码。本章将具体介绍几种常用的对称加密算法，包括流密码RC4和
+分组密码DES、3DES、AES以及Blowfish。
+
+\stopcomponent

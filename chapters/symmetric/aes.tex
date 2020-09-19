@@ -1,0 +1,874 @@
+\startcomponent aes
+
+\startsection[title={AES加密算法},reference=sec:aes]
+\index{sec:aes}
+
+AES的全称是Advanced Encryption Standard，意思是高级加密标准。它的出现主要是为了取代DES加密算法的，
+我们已经知道DES算法的有效密钥长度是56位，因此算法的理论安全强度是$2^{56}$。但二十世纪中后期计算机飞速发展，
+元器件制造工艺的进步使得计算机的处理能力越来越强，虽然出现了3DES的加密方法，但由于它的加密时间是DES算法的3倍多，
+64位的分组大小相对较小，所以还是不能满足对信息安全的要求。于是1997年1月2号，美国国家标准技术研究所（NIST）宣布
+希望征集高级加密标准，用以取代DES。在密码标准征集中，所有AES候选提交方案都必须满足以下标准：
+
+\startitemize[packed]
+\item 分组大小为128位的分组密码。
+\item 必须支持三种密码标准：128位、192位和256位。
+\item 比提交的其他算法更安全。
+\item 在软件和硬件实现上都很高效。
+\stopitemize
+
+AES也得到了全世界很多密码工作者的响应，先后有很多人提交了自己设计的算法。有5个候选算法进入最后一轮：Rijndael，
+Serpent，Twofish，RC6和MARS。最终经过安全性分析、软硬件性能评估等严格的步骤，Rijndael算法获胜。
+
+% https://zhuanlan.zhihu.com/p/78913397
+
+\startsubsection[title={Rijndael算法},reference=subsec:rijndael]
+
+Rijndael算法是由比利时学者Joan Daemen和Vincent Rijmen所提出的，算法的名字就由两位作者的名字组合而成。
+Rijndael的优势在于集安全性、性能、效率、可实现性及灵活性与一体。不同于DES，Rijndael使用的是代换---置换
+网络（SPN，Substitution-Permutation Network），而非Feistel结构。
+
+严格地说，AES和Rijndael加密算法并不完全一样（虽然在实际应用中两者可以互换）。Rijndael算法支持更大范围的
+分组和密钥长度，介于128-256之间所有32的倍数均可，最小支持128位，最大256位，共25种组合。而AES标准支持的
+分组大小固定为128位，密钥长度有3种选择：128位、192位及256位，分别为AES-128、AES-192和AES-256。
+
+\stopsubsection
+
+% https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+% https://www.anquanke.com/post/id/85656
+% https://blog.csdn.net/yxtxiaotian/article/details/52084123
+\startsubsection[title={Rijndael的加密},reference=subsec:rijndael-encrypt]
+
+不同于DES加密算法的Feistel网络结构，Rijndael算法是基于代换---置换网络的迭代算法。但是，和DES加密算法类似，
+Rijndael加密过程中，明文数据也需要经过多个轮次的转换后方能生成密文，每个轮次的转换操作由轮函数定义。同时，
+Rijndael也包括一个密钥调度算法来根据种子密钥（用户密钥）编排生成多组轮密钥。
+
+根据Rinjdael算法的定义，加密轮数会针对不同的分组及不同的密钥长度选择不同的数值。以字长为单位，1字长等于4个字节，
+用$N_b$表示分组的长度，$N_k$表示密钥的长度，那么，$N_b = 4$就是$4 \times 4 \times 8 = 128$比特，以此类推。
+Rinjdael给出的加密轮数$N_r$的选择如\in{表}[tab:rinjdael-rounds]所示。
+
+\placetable
+  [here][tab:rinjdael-rounds]
+  {Rinjdael加密轮数$N_r$}{
+  \starttable[|c|c|c|c|]
+  \HL
+  \NC {\bf $N_r$}     \VL {\bf $N_b = 4$ (AES)} \NC {\bf $N_b = 6$} \NC {\bf $N_b = 8$} \NC\SR
+  \HL
+  \NC {\bf $N_k = 4$} \VL 10 (AES-128)          \NC 12              \NC 14              \NC\FR
+  \NC {\bf $N_k = 6$} \VL 12 (AES-192)          \NC 12              \NC 14              \NC\MR
+  \NC {\bf $N_k = 8$} \VL 14 (AES-256)          \NC 14              \NC 14              \NC\LR
+  \HL
+  \stoptable
+  }
+
+由于AES标准中分组大小固定为128位（$N_b = 4$），以128位密钥长度（$N_k = 4$）为例，即AES-128算法，加密的总体结构
+如\in{图}[fig:aes-128]所示，AES-128需要10轮加密，图中左半部分给出了AES-128加密的过程，右半部分为轮密钥的生成过程。
+加密过程中，第0轮相当于预处理，不计算在轮数内。除最后一轮之外，第1至9轮，每轮的加密轮函数会根据轮密钥对数据依次进行如下
+4种运算：
+
+\startitemize[packed]
+\item \type{SubBytes}（字节代换）
+\item \type{ShiftRows}（行移位）
+\item \type{MixColumns}（列混淆）
+\item \type{AddRoundKey}（轮密钥加）
+\stopitemize
+
+\startplacefigure[title={AES算法总体结构},reference=fig:aes-128]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+labelnode/.style={font=\switchtobodyfont[6pt]},
+pnode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.2em,inner sep=0,font=\switchtobodyfont[6pt]},
+knode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.2em,inner sep=0,font=\switchtobodyfont[6pt]},
+rnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,minimum width=3cm,minimum height=1.4em,
+  rounded corners,font=\switchtobodyfont[6pt]},
+enode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,minimum width=3cm,minimum height=1.4em,
+  rounded corners,font=\switchtobodyfont[6pt]},
+node distance=0pt]
+
+\matrix (input) [matrix of nodes,nodes={pnode}]
+{
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+};
+\node [labelnode,above=of input] {明文字节序列};
+
+\matrix (state) [matrix of nodes,nodes={pnode},below=of input]
+{
+  1 & 5 & 9  & 13 \\
+  2 & 6 & 10 & 14 \\
+  3 & 7 & 11 & 15 \\
+  4 & 8 & 12 & 16 \\
+};
+\draw [post] (input-1-8.south east) -- (state-1-2.north east);
+\node [labelnode,left=of state] {状态矩阵};
+
+\coordinate (s42-se) at (state-4-2.south east);
+\node [rnode,below=0.4cm of s42-se] (r0-rk) {AddRoundKey} edge [pre] (state-4-2.south east);
+\node [labelnode, left=1cm of r0-rk] (r0-text) {第0轮};
+
+\node [rnode,below=0.70cm of r0-rk] (r1-sb) {SubBytes} edge [pre] (r0-rk);
+\node [rnode,below=0.25cm of r1-sb] (r1-sr) {ShiftRows} edge [pre] (r1-sb);
+\node [rnode,below=0.25cm of r1-sr] (r1-mc) {MixColumns} edge [pre] (r1-sr);
+\node [rnode,below=0.25cm of r1-mc] (r1-rk) {AddRoundKey} edge [pre] (r1-mc);
+\node [labelnode, left=1cm of r1-sb] (r1-text) {第1轮};
+\node [labelnode, left=1cm of r1-rk] (r9-text) {第9轮};
+\node [labelnode] at ($ (r1-text.south)!.5!(r9-text.north) $) {\vdots};
+
+\node [rnode,below=0.70cm of r1-rk] (r10-sb) {SubBytes} edge [pre] (r1-rk);
+\node [rnode,below=0.25cm of r10-sb] (r10-sr) {ShiftRows} edge [pre] (r10-sb);
+\node [rnode,below=0.25cm of r10-sr] (r10-rk) {AddRoundKey} edge [pre] (r10-sr);
+\node [labelnode, left=1cm of r10-sr] (r10-text) {第10轮};
+
+\draw [post, rounded corners] ($ (r1-rk.south)!.5!(r10-sb.north) $) -- ++(-2cm,0) |- ($ (r0-rk.south)!.5!(r1-sb.north) $);
+
+\matrix (output) [matrix of nodes,nodes={pnode},below=9.5cm of input]
+{
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+};
+
+\draw [post] (r10-rk) -- (output-1-8.north east);
+
+\startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, 
+  inner ysep=0.18cm, inner xsep=0.75cm, rounded corners, xshift=0.5cm, 
+  fit=(r0-rk) (r0-text)] {};
+\stopscope
+
+\startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, 
+  inner ysep=0.18cm, inner xsep=0.75cm, rounded corners, xshift=0.5cm, 
+  fit=(r1-text) (r9-text) (r1-sb) (r1-rk)] {};
+\stopscope
+
+\startscope [on background layer]
+  \node
+  [fill=white!62.5!black, draw=red!62.5!black, very thick, 
+  inner ysep=0.18cm, inner xsep=0.75cm, rounded corners, xshift=0.5cm, 
+  fit=(r10-sb) (r10-rk) (r10-text)] {};
+\stopscope
+
+% key scheduling on the right side
+\matrix (key) [matrix of nodes,nodes={knode},right=0.5cm of input]
+{
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+};
+\node [labelnode,above=of key] {种子密钥字节序列};
+
+\matrix (key-state) [matrix of nodes,nodes={knode},below=of key]
+{
+  1 & 5 & 9  & 13 \\
+  2 & 6 & 10 & 14 \\
+  3 & 7 & 11 & 15 \\
+  4 & 8 & 12 & 16 \\
+};
+\draw [post] (key-1-8.south east) -- (key-state-1-2.north east);
+
+\coordinate (n8-se) at (key-state-4-2.south east);
+\node [enode,below=0.4cm of n8-se] (ke) {扩展密钥} edge [pre] (key-state-4-2.south east);
+
+\matrix (round-keys) [matrix of nodes,nodes={knode},below=0.5cm of ke,label=above left:{\switchtobodyfont[6pt] \qquad 各轮子密钥}]
+{
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+  1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 \\
+};
+\draw [post] (ke) -- (round-keys);
+% \node [labelnode,above=of round-keys] {各轮子密钥};
+\node[labelnode,left=of round-keys-1-1]  {R0}  edge [post] (r0-rk.east);
+\node[labelnode,left=of round-keys-2-1]  {R1}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-3-1]  {R2}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-4-1]  {R3}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-5-1]  {R4}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-6-1]  {R5}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-7-1]  {R6}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-8-1]  {R7}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-9-1]  {R8}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-10-1] {R9}  edge [post] (r1-rk.east);
+\node[labelnode,left=of round-keys-11-1] {R10} edge [post] (r10-rk.east);
+
+\stoptikzpicture
+}
+\stopplacefigure
+
+\in{图}[fig:aes-128]中小方格中的数字代表该字节在分组中的位置。这16字节的明文分组以列为主序排列为一个$4 \times 4$
+的状态矩阵，矩阵中的每个元素就是一个字节。由明文分组生成的状态矩阵称为初始状态。初始状态矩阵经过第0轮的
+\type{AddRoundKey}运算后的状态矩阵，进一步经过10轮迭代处理生成密文分组。前一轮处理完后的输出状态作为
+下一轮处理的输入状态，第10轮加密完后的输出状态以列为主序排列为密文分组。
+
+以下，对Rijndael算法中使用的4种运算进行详细的介绍。
+
+{\bf \type{AddRoundKey}（轮密钥加）}
+
+在每次的加密循环中，都会由种子密钥产生一把轮密钥（通过Rijndael密钥调度算法产生）。在\type{AddRoundKey}运算中，
+轮密钥与状态矩阵中的每个字节元素依次相“加”，这里的加法运算实际上是逻辑运算中的异或计算，如\in{图}[fig:add-roundkey]
+所示。
+
+\startplacefigure[title={\type{AddRoundKey}运算},reference=fig:add-roundkey]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+% pnode/.style={draw=red!62.5!black,thick,fill=green!62.5!black,inner xsep=6pt,inner ysep=4pt,rounded corners,font=\Tiny},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+hnode/.style={draw=red!62.5!black,very thick,fill=green!62.5!black,minimum size=2.6em,font=\Tiny,drop shadow},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=3cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) (add) {\type{AddRoundKey}};
+
+\node [hnode] at (node cs:name=state-a-3-3,anchor=center) (a22) {$a_{2,2}$};
+\node [hnode] at (node cs:name=state-b-3-3,anchor=center) (b22) {$b_{2,2}$};
+
+\node [draw=none,fill=none,below=1.5cm of add,inner sep=0] (xor) {\switchtobodyfont[18pt] $\oplus$};
+\path (a22.east) edge [post,bend left=30] (xor.north);
+\path (xor.east) edge [post,bend right=20] (b22.south);
+
+\matrix (state-c) [matrix of nodes,nodes={snode},below=1cm of state-a]
+{
+  $c_{0,0}$ & $c_{0,1}$ & $c_{0,2}$ & $c_{0,3}$ \\
+  $c_{1,0}$ & $c_{1,1}$ & $c_{1,2}$ & $c_{1,3}$ \\
+  $c_{2,0}$ & $c_{2,1}$ & $c_{2,2}$ & $c_{2,3}$ \\
+  $c_{3,0}$ & $c_{3,1}$ & $c_{3,2}$ & $c_{3,3}$ \\
+};
+\node [hnode] at (node cs:name=state-c-3-3,anchor=center) (c22) {$c_{2,2}$};
+\path (c22.east) edge [pre,bend right=30] (xor.south);
+
+\stoptikzpicture
+}
+\stopplacefigure
+
+{\bf \type{SubByte}（字节代换）}
+
+% Rijndael S-box: https://en.wikipedia.org/wiki/Rijndael_S-box
+
+在\type{SubBytes}步骤中，状态矩阵中的各个字节通过一个8比特的\type{S}盒进行替换，如\in{图}[fig:sub-bytes]所示。
+字节代换是可逆的非线性变换，也是AES运算组中唯一的非线性变换。\type{S}盒是事先设计好的替换查询表。其设计不是随意的，
+而是根据设计原则严格计算求得，不然无法保证算法的安全性。
+
+\startplacefigure[title={\type{SubBytes}运算},reference=fig:sub-bytes]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+hnode/.style={draw=red!62.5!black,very thick,fill=green!62.5!black,minimum size=2.6em,font=\Tiny,drop shadow},
+bnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,minimum size=2em},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=3cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+% \draw [post] (state-a.east) -- node [pnode,above=6pt] {\type{SubBytes}} (state-b.west);
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) {\type{SubBytes}};
+
+\node [hnode] at (node cs:name=state-a-3-3,anchor=center) (a22) {$a_{2,2}$};
+\node [hnode] at (node cs:name=state-b-3-3,anchor=center) (b22) {$b_{2,2}$};
+
+\draw [post] (a22) to [bend right=45] node[bnode,midway] {\type{S}} (b22);
+\stoptikzpicture
+}
+\stopplacefigure
+
+
+{\bf \type{ShiftRows}（行移位）}
+
+\type{ShiftRows}描述了作用在矩阵的行上的移位操作，如\in{图}[fig:shift-rows]。在此运算中，
+每一行都向左循环位移某个偏移量。在AES-128中，第1行维持不变，第2行里面的每个元素都向左循环移动
+一格。同理，第3行及第4行向左循环位移的偏移量就分别是2格和3格。
+
+\startplacefigure[title={\type{ShiftRows}运算},reference=fig:shift-rows]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=3cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) {\type{ShiftRows}};
+
+\path (state-a-2-2.south) +(-2pt,4pt) edge [post,bend left=45] ( $(state-a-2-1.south)+(2pt,4pt)$ );
+\path (state-a-2-3.south) +(-2pt,4pt) edge [post,bend left=45] ( $(state-a-2-2.south)+(2pt,4pt)$ );
+\path (state-a-2-4.south) +(-2pt,4pt) edge [post,bend left=45] ( $(state-a-2-3.south)+(2pt,4pt)$ );
+\path (state-a-3-3.south) +(-2pt,4pt) edge [post,bend left=30] ( $(state-a-3-1.south)+(2pt,4pt)$ );
+\path (state-a-3-4.south) +(-2pt,4pt) edge [post,bend left=30] ( $(state-a-3-2.south)+(2pt,4pt)$ );
+\path (state-a-4-4.south) +(-2pt,4pt) edge [post,bend left=20] ( $(state-a-4-1.south)+(2pt,4pt)$ );
+\stoptikzpicture
+}
+\stopplacefigure
+
+
+{\bf \type{MixColumns}（列混淆）}
+
+列混淆是Rijndael算法中最复杂的一步，其理论基础为近世代数的域论，实质是在有限域
+（亦称伽罗瓦域，Galois Field）$GF(2^8)$上的多项式乘法运算。伽罗瓦是法国的数学家，群论的
+创立者。用群论彻底解决了根式求解代数方程的问题，而且由此发展了一整套关于群和
+域的理论。在解释列混淆运算之前，我们有必要先简单了解一下域的概念和域中元素的四则运算。
+
+一组元素的集合，以及在集合上的四则运算，构成一个{\it 域}。其中加法和乘法必须满足交换、结合
+和分配的规律，这看起来跟我们平时算术中的乘法和加法运算非常类似。但是，域的一个非常重要的性质
+是加法和乘法具有封闭性，即加法和乘法的结果仍然是域中的元素。
+
+伽罗瓦的重大发现在于有限域，也就是仅含有限多个元素的域。所以当我们说伽罗瓦域的时候，就是指
+有限域。$GF(2^w)$表示含有$2^w$个元素的有限域。
+
+$GF(2^8)$由一组从\type{0x00}到\type{0xff}的256个值组成，加上加法和乘法运算。
+$GF(2^8)$加法就是异或（XOR）操作。然而，$GF(2^8)$的乘法有点复杂。AES的\type{MixColumns}运算
+及其逆运算需要知道怎样只用七个常量\type{0x01}、\type{0x02}、\type{0x03}、\type{0x09}、
+\type{0x0b}、\type{0x0d}和\type{0x0e}来相乘。所以这里不全面介绍$GF(2^8)$的乘法，而只是
+针对这七种特殊情况进行说明。  
+
+首先，在$GF(2^8)$中用\type{0x01}的乘法是特殊的；它相当于普通算术中用1做乘法并且结果也同样---任何值
+乘\type{0x01}等于其自身。 
+
+现在让我们看看用\type{0x02}做乘法。和加法的情况相同，虽然理论是深奥的，但最终结果十分简单。只要
+被乘的值小于\type{0x80}，这时乘法的结果就是该值左移1比特位。如果被乘的值大于或等于\type{0x80}，
+这时乘法的结果就是左移1比特位再用值\type{0x1b}异或。它防止了“域溢出”并保持乘法的乘积在范围以内。 
+
+一旦你在$GF(2^8)$中用\type{0x02}建立了加法和乘法，你就可以用任何常量去定义乘法。用\type{0x03}
+做乘法时，你可以将\type{0x03}分解为2的幂之和。为了用\type{0x03}乘以任意字节\type{b}，因为
+$0x03 = 0x02 \oplus 0x01$，因此： 
+\startformula
+\startmathalignment[n=4,align=middle]
+\NC b \otimes 0x03 \NC = \NC b \otimes (0x02 \oplus 0x01) \NR
+\NC                \NC = \NC (b \otimes 0x02) \oplus (b \otimes 0x01) \NR
+\stopmathalignment
+\stopformula
+
+同理，用\type{0x0d}去乘以任意字节\type{b}可以这样做：
+\startformula
+\startmathalignment[n=4,align=middle]
+\NC b \otimes 0x0d \NC = \NC b \otimes (0x08 \oplus 0x04 \oplus 0x01) \NR
+\NC               \NC = \NC (b \otimes 0x08) \oplus (b \otimes 0x04) \oplus (b \otimes 0x01) \NR
+\NC               \NC = \NC (b \otimes 0x02 \otimes 0x02 \otimes 0x02) \oplus (b \otimes 0x02 \otimes 0x02) \oplus (b \otimes 0x01) \NR
+\stopmathalignment
+\stopformula
+
+\type{MixColumns}运算的其它乘法遵循大体相同的模式，例如： 
+\startformula
+\startmathalignment[n=4,align=middle]
+\NC b \otimes 0x09 \NC = \NC b \otimes (0x08 \oplus 0x01) \NR
+\NC                \NC = \NC (b \otimes 0x02 \otimes 0x02 \otimes 0x02) \oplus (b \otimes 0x01) \NR
+\NC b \otimes 0x0b \NC = \NC b \otimes (0x08 \oplus 0x02 \oplus 0x01) \NR
+\NC                \NC = \NC (b \otimes 0x02 \otimes 0x02 \otimes 0x02) \oplus (b \otimes 0x02) \oplus (b \otimes 0x01) \NR
+\NC b \otimes 0x0e \NC = \NC b \otimes (0x08 \oplus0x04 \oplus 0x02) \NR
+\NC                \NC = \NC (b \otimes 0x02 \otimes 0x02 \otimes 0x02) \oplus (b \otimes 0x02 \otimes 0x02) \oplus (b \otimes 0x02) \NR
+\stopmathalignment
+\stopformula
+
+基于以上关于有限域$GF(2^8)$上的加法和乘法运算，\in{图}[fig:mix-columns]说明了\type{MixColumns}的原理，用矩阵乘法公式可以表示为：
+\startformula
+\left[\startmatrix
+  b_{0,j} \cr
+  b_{1,j} \cr
+  b_{2,j} \cr
+  b_{3,j} \cr
+\stopmatrix\right]
+=
+\left[\startmatrix
+  \NC 02 \NC 03 \NC 01 \NC 01 \NR
+  \NC 01 \NC 02 \NC 03 \NC 01 \NR
+  \NC 01 \NC 01 \NC 02 \NC 03 \NR
+  \NC 03 \NC 01 \NC 01 \NC 02 \NR
+\stopmatrix\right]
+\left[\startmatrix
+  a_{0,j} \cr
+  a_{1,j} \cr
+  a_{2,j} \cr
+  a_{3,j} \cr
+\stopmatrix\right]
+\quad
+0 \leq j \leq 3
+\stopformula
+
+由于矩阵乘法将一列中的各个字节利用有限域$GF(2^8)$上的乘法运算和加法运算组合起来，输出状态矩阵
+相应列的每个字节都受来自输入列四个字节的影响。同样，每个输入列单个字节都会对输出列四个字节造成
+影响。因此，\type{ShiftRows}和\type{MixColumns}两步骤为这个密码系统提供了扩散性。
+
+\startplacefigure[title={\type{MixColumns}运算},reference=fig:mix-columns]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+mnode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.2em,font=\Tiny},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=4cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) (mix-columns) {\type{MixColumns}};
+
+\matrix (coff) [matrix of nodes,nodes={mnode},above=6pt of mix-columns,xshift=0.4cm,label=left:{\switchtobodyfont[8pt] 左乘}]
+{
+  02 & 03 & 01 & 01 \\
+  01 & 02 & 03 & 01 \\
+  01 & 01 & 02 & 03 \\
+  03 & 01 & 01 & 02 \\
+};
+\stoptikzpicture
+}
+\stopplacefigure
+
+\stopsubsection
+
+% https://en.wikipedia.org/wiki/AES_key_schedule
+\startsubsection[title={Rinjdael密钥扩展算法},reference=subsec:rijndael-ksa]
+
+密钥扩展算法是Rijndael的密钥编排实现算法，其目的是根据种子密钥（用户密钥）生成多组轮密钥。轮密钥用于
+每轮（包括第0轮）\type{AddRoundKey}运算中和状态矩阵进行按字节顺序的异或计算。我们继续用$N_b$、$N_k$、$N_r$来
+表示分组和密钥长度（以字长为单位），以及加密轮数（参见\in{表}[tab:rinjdael-rounds]）。Rijndael需要
+扩展出$N_r + 1$个子密钥参与每轮的\type{AddRoundKey}运算。由于每轮子密钥的长度和分组长度$N_b$一致，
+所以，需要扩展的所有子密钥的总长度$N_w = N_b \times (N_r + 1)$个字。因为AES算法固定了分组长度为
+128位，即4个字长，因此，AES算法中$N_b = 4$。那么，AES加密算法需要根据种子密钥扩展的子密钥总长度$N_w$如
+\in{表}[tab:aes-nw]所示。
+
+\placetable
+  [here][tab:aes-nw]
+  {AES扩展子密钥的字长数$N_w$}{
+  \starttable[|c|c|c|c|c|]
+  \HL
+  \NC               \VL {\bf $N_b$} \NC {\bf $N_k$} \NC {\bf $N_r$} \NC {\bf\darkred $N_w$} \NC\SR
+  \HL
+  \NC {\bf AES-128} \VL 4           \NC 4           \NC 10          \NC {\bf\darkred 44}    \NC\FR
+  \NC {\bf AES-192} \VL 4           \NC 6           \NC 12          \NC {\bf\darkred 52}    \NC\MR
+  \NC {\bf AES-256} \VL 4           \NC 8           \NC 14          \NC {\bf\darkred 64}    \NC\LR
+  \HL
+  \stoptable
+  }
+
+将每轮子密钥以字长为单位排列成一个序列，用$w_i~(0 \leq i \leq N_w-1)$表示子密钥序列中的第$i$个元素，那么，
+AES算法的密钥扩展就是计算每个$w_i$的值。$w_i$的计算可以用如下数学公式描述：
+
+\startformula
+w_i =
+\startmathcases
+\NC [k_{4i} ~ k_{4i+1} ~ k_{4i+2} ~ k_{4i+3}],  \NC if 0 \leq i \lt $N_k$;         \NR
+\NC w_{i-N_k} \oplus \mathrm{G}(w_{i-1}),       \NC if $i \geq N_k$ and $i \mod N_k = 0$;             \NR
+\NC w_{i-N_k} \oplus \mathrm{SubWord}(w_{i-1}), \NC if $i \geq N_k$, $N_k > 6$, and $i \mod N_k = 4$; \NR
+\NC w_{i-N_k} \oplus w_{i-1},                   \NC Otherwise.                                        \NR
+\stopmathcases
+\stopformula
+
+公式略显复杂，但是如果我们用\in{图}[fig:rijndael-ksa]来解释AES-128的密钥扩展过程，则该计算就一目了然了。
+
+\startplacefigure[title={AES-128密钥扩展原理图},reference=fig:rijndael-ksa]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+knode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=2.2em,font=\Tiny},
+bnode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=2.2em,font=\switchtobodyfont[7pt]},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\switchtobodyfont[7pt]},
+gnode/.style={single arrow,draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=2.2em,font=\switchtobodyfont[7pt]},
+node distance=0pt]
+
+% 总体结构
+\matrix (key) [matrix of nodes,nodes={knode}] 
+{
+  $k_0$ & $k_4$ & $k_8$    & $k_{12}$ \\
+  $k_1$ & $k_5$ & $k_9$    & $k_{13}$ \\
+  $k_2$ & $k_6$ & $k_{10}$ & $k_{14}$ \\
+  $k_3$ & $k_7$ & $k_{11}$ & $k_{15}$ \\
+};
+
+\matrix (words-r0) [matrix of nodes,nodes={knode},below=0.25cm of key]
+{
+  $w_0$ & $w_1$ & $w_2$ & $w_3$ \\
+};
+\draw [post] (key-4-1.south) -- (words-r0-1-1.north);
+\draw [post] (key-4-2.south) -- (words-r0-1-2.north);
+\draw [post] (key-4-3.south) -- (words-r0-1-3.north);
+\draw [post] (key-4-4.south) -- (words-r0-1-4.north);
+\node [knode,shape=circle,right=0.5cm of words-r0] (g0) {G} edge [pre] (words-r0.east);
+\node [gnode, right=0.1cm of g0] {G函数内部运算逻辑};
+
+\matrix (words-r1) [matrix of nodes,nodes={knode},below=1cm of words-r0]
+{
+  $w_4$ & $w_5$ & $w_6$ & $w_7$ \\
+};
+\node [knode,shape=circle,right=0.5cm of words-r1] (g1) {G} edge [pre] (words-r1.east);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r0-1-1.south)!0.6!(words-r1-1-1.north) $) 
+  (oplus-r11) {$\oplus$} edge [pre] (words-r0-1-1.south) edge [post] (words-r1-1-1.north);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r0-1-2.south)!0.6!(words-r1-1-2.north) $) 
+  (oplus-r12) {$\oplus$} edge [pre] (words-r0-1-2.south) edge [post] (words-r1-1-2.north) 
+  edge [pre] (words-r1-1-1.north);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r0-1-3.south)!0.6!(words-r1-1-3.north) $) 
+  (oplus-r13) {$\oplus$} edge [pre] (words-r0-1-3.south) edge [post] (words-r1-1-3.north) 
+  edge [pre] (words-r1-1-2.north);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r0-1-4.south)!0.6!(words-r1-1-4.north) $) 
+  (oplus-r14) {$\oplus$} edge [pre] (words-r0-1-4.south) edge [post] (words-r1-1-4.north) 
+  edge [pre] (words-r1-1-3.north);
+\draw [post] (g0.south) -- ++(0, -0.25cm) -| ($ (oplus-r11.east)+(0.25cm,0) $) -- (oplus-r11.east);
+
+\matrix (words-r10) [matrix of nodes,nodes={knode},below=1cm of words-r1]
+{
+  $w_{40}$ & $w_{41}$ & $w_{42}$ & $w_{43}$ \\
+};
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r1-1-1.south)!0.6!(words-r10-1-1.north) $) 
+  (oplus-r101) {$\oplus$} 
+  edge [pre,loosely dash dot dot] (words-r1-1-1.south) 
+  edge [post,loosely dash dot dot] (words-r10-1-1.north);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r1-1-2.south)!0.6!(words-r10-1-2.north) $) 
+  (oplus-r102) {$\oplus$} 
+  edge [pre,loosely dash dot dot] (words-r1-1-2.south) 
+  edge [post,loosely dash dot dot] (words-r10-1-2.north) 
+  edge [pre] (words-r10-1-1.north);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r1-1-3.south)!0.6!(words-r10-1-3.north) $) 
+  (oplus-r103) {$\oplus$} 
+  edge [pre,loosely dash dot dot] (words-r1-1-3.south) 
+  edge [post,loosely dash dot dot] (words-r10-1-3.north) 
+  edge [pre] (words-r10-1-2.north);
+\node [draw=none,fill=none,inner sep=0] at ($ (words-r1-1-4.south)!0.6!(words-r10-1-4.north) $) 
+  (oplus-r104) {$\oplus$} 
+  edge [pre,loosely dash dot dot] (words-r1-1-4.south) 
+  edge [post,loosely dash dot dot] (words-r10-1-4.north) 
+  edge [pre] (words-r10-1-3.north);
+\draw [post,loosely dash dot dot] (g1.south) -- ++(0, -0.25cm) 
+  -| ($ (oplus-r101.east)+(0.25cm,0) $) -- (oplus-r101.east);
+
+% G函数
+\node [bnode,right=6cm of key-1-4] (word-input) {$w$};
+\matrix (bytes-r0) [matrix of nodes,nodes={bnode},inner sep=0,below=0.5cm of word-input]
+{
+  $b_0$ & $b_1$ & $b_2$ & $b_3$ \\
+};
+\draw [post] (word-input.south) -- (bytes-r0.north);
+
+\matrix (rotword) [matrix of nodes,nodes={minimum width=2.2em, minimum height=1.6em,draw=white!62.5!black},inner sep=0,below=0.25cm of bytes-r0]
+{
+  {}  &  {}  & {}  & {}  \\
+};
+\node [fill=white!62.5!black,draw=red!62.5!black,thick,inner sep=0,fit=(rotword-1-1) (rotword-1-4)] {};
+\node [draw=none,fill=none,right=5pt of rotword-1-4] {\switchtobodyfont[8pt]\type{RotWord}};
+
+\draw [post] (bytes-r0-1-1.south) -- (rotword-1-1.north);
+\draw [post] (bytes-r0-1-2.south) -- (rotword-1-2.north);
+\draw [post] (bytes-r0-1-3.south) -- (rotword-1-3.north);
+\draw [post] (bytes-r0-1-4.south) -- (rotword-1-4.north);
+\draw [semithick] (rotword-1-1.north) -- (rotword-1-4.south);
+\draw [semithick] (rotword-1-2.north) -- (rotword-1-1.south);
+\draw [semithick] (rotword-1-3.north) -- (rotword-1-2.south);
+\draw [semithick] (rotword-1-4.north) -- (rotword-1-3.south);
+
+\matrix (bytes-r1) [matrix of nodes,nodes={bnode},inner sep=0,below=0.25cm of rotword]
+{
+  $b_1$ & $b_2$ & $b_3$ & $b_0$ \\
+};
+\draw [post] (rotword-1-1.south) -- (bytes-r1-1-1.north);
+\draw [post] (rotword-1-2.south) -- (bytes-r1-1-2.north);
+\draw [post] (rotword-1-3.south) -- (bytes-r1-1-3.north);
+\draw [post] (rotword-1-4.south) -- (bytes-r1-1-4.north);
+
+\matrix (bytes-r2) [matrix of nodes,nodes={bnode},inner sep=0,below=1.5cm of bytes-r1]
+{
+  $b'_1$ & $b'_2$ & $b'_3$ & $b'_0$ \\
+};
+\node [snode] at ($ (bytes-r1-1-1.south)!.5!(bytes-r2-1-1.north) $) {S}
+  edge [pre] (bytes-r1-1-1.south) edge [post] (bytes-r2-1-1.north);
+\node [snode] at ($ (bytes-r1-1-2.south)!.5!(bytes-r2-1-2.north) $) {S}
+  edge [pre] (bytes-r1-1-2.south) edge [post] (bytes-r2-1-2.north);
+\node [snode] at ($ (bytes-r1-1-3.south)!.5!(bytes-r2-1-3.north) $) {S}
+  edge [pre] (bytes-r1-1-3.south) edge [post] (bytes-r2-1-3.north);
+\node [snode] at ($ (bytes-r1-1-4.south)!.5!(bytes-r2-1-4.north) $) (sub4) {S}
+  edge [pre] (bytes-r1-1-4.south) edge [post] (bytes-r2-1-4.north);
+\node [fill=none,draw=none,right=0.2cm of sub4] {\switchtobodyfont[8pt]\type{SubWord}};
+
+\node [draw=none,fill=none,inner sep=0,below=0.5cm of bytes-r2] (oplus) {$\oplus$};
+
+\matrix (rcon) [matrix of nodes,nodes={bnode,anchor=south},inner sep=0,right=1cm of oplus]
+{
+  $RC_j$ & $0$ & $0$ & $0$ \\
+};
+\draw [post] (rcon.west) -- (oplus.east);
+\draw [post] (bytes-r2.south) -- (oplus.north);
+
+\node [bnode,below=0.75cm of oplus] (word-output) {$w'$} edge [pre] (oplus.south);
+
+\startscope [on background layer,rounded corners]
+  \node [fill=white!62.5!black,draw=red!62.5!black,thick,inner sep=6pt,yshift=2pt,fit=(bytes-r0) (rcon)] {};
+\stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+首先，从公式中的第1个条件可知，前$N_k$个$w$元素由种子密钥初始化而来。对于AES-128，$N_k = 4$，将种子密钥每4个
+字节依序赋值给$w_0$、$w_1$、$w_2$和$w_3$。将每$N_k$个$w$元素排成一行，根据公式中的第2个条件，每行的
+第一个$w$元素由上一行的最后一个$w$元素经过\type{G}函数转换后与上一行的第一个$w$元素进行异或计算而来。
+当$N_k > 6$时，即AES-128和AES-192，根据第4个条件，每行的其他$w$元素均由该行前一个$w$元素和该列上一行的$w$元素
+直接异或计算而来。第3个条件则适用于AES-256，也就是说，在AES-256中，每行的第5个$w$元素则由该行的前一个元素
+经过\type{SubWord}替换后与该列上一行的$w$元素异或计算而来。
+
+在AES子密钥生成过程中，每行的最后一个$w$元素都要经过\type{G}函数转换后再和该行第一个$w$元素“相加”计算出下一行
+的第一个$w$元素。\in{图}[fig:rijndael-ksa]的右半部分描述了\type{G}函数的计算过程，主要包括3个运算，分别为：
+\type{RotWord}、\type{SubWord}和一次异或计算。\type{RotWord}将$w$元素中的4个字节进行循环置换（以字节为单位
+循环右移）。\type{SubWord}则是根据加密过程中\type{SubByte}运算中的\type{S}盒对每个字节进行替换操作。而最后
+一步的异或计算则稍微繁琐，其复杂之处在于轮常量$RC_j~(1 \leq j \leq N_r)$的计算。$RC_j$由定义在有限域$GF(2^8)$
+上的$0x02^{j-1}$的值计算而来，根据前面讨论有限域$GF(2^8)$上的乘法运算的规则，我们不难得出每轮的轮常量$RC_j$值
+如下表所示。
+
+\placetable
+  [here][tab:aes-rcon]
+  {AES密钥扩展G函数中轮常量$RC_j$的值}{
+  \starttable[|c|c|c|c|c|c|c|c|c|c|c|]
+  \HL
+  \NC j            \VL {\bf 1} \NC {\bf 2} \NC {\bf 3} \NC {\bf 4} \NC {\bf 5} \NC {\bf 6} \NC {\bf 7} \NC {\bf 8} \NC {\bf 9} \NC {\bf 10} \NC\SR
+  \HL
+  \NC {\bf $RC_j$} \VL 0x01    \NC 0x02    \NC 0x04    \NC 0x08    \NC 0x10    \NC 0x20    \NC 0x40    \NC 0x80    \NC 0x1b    \NC 0x36     \NC\FR
+  \HL
+  \stoptable
+  }
+\stopsubsection
+
+\startsubsection[title={Rinjdael的解密},reference=subsec:rijndael-decrypt]
+
+上一节，我们已经对Rinjdael的总体加密过程以及加密过程中所涉及的各种运算逐个进行了详细的说明。下面，我们来了解
+Rinjdael的解密。Rinjdael的解密过程就是将\in{图}[fig:aes-128]所示的加密过程颠倒过来。加密轮函数
+中的四种运算对应的逆运算分别为：
+\type{InvSubBytes}（\in{图}[fig:inv-sub-bytes]）、
+\type{InvShiftRows}（\in{图}[fig:inv-shift-rows]）、
+\type{InvMixColumns}（\in{图}[fig:inv-mix-columns]）和\type{AddRoundKey}。
+
+
+\startplacefigure[title={\type{InvSubBytes}运算},reference=fig:inv-sub-bytes]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+hnode/.style={draw=red!62.5!black,very thick,fill=green!62.5!black,minimum size=2.6em,font=\Tiny,drop shadow},
+bnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,minimum size=2em},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=3cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) {\type{InvSubBytes}};
+
+\node [hnode] at (node cs:name=state-a-3-3,anchor=center) (a22) {$a_{2,2}$};
+\node [hnode] at (node cs:name=state-b-3-3,anchor=center) (b22) {$b_{2,2}$};
+
+\draw [post] (a22) to [bend right=45] node[bnode,midway] {$S'$} (b22);
+\stoptikzpicture
+}
+\stopplacefigure
+
+\startplacefigure[title={\type{InvShiftRows}运算},reference=fig:inv-shift-rows]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=3cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) {\type{InvShiftRows}};
+
+\path (state-a-2-2.south) +(-2pt,4pt) edge [pre,bend left=45] ( $(state-a-2-1.south)+(2pt,4pt)$ );
+\path (state-a-2-3.south) +(-2pt,4pt) edge [pre,bend left=45] ( $(state-a-2-2.south)+(2pt,4pt)$ );
+\path (state-a-2-4.south) +(-2pt,4pt) edge [pre,bend left=45] ( $(state-a-2-3.south)+(2pt,4pt)$ );
+\path (state-a-3-3.south) +(-2pt,4pt) edge [pre,bend left=30] ( $(state-a-3-1.south)+(2pt,4pt)$ );
+\path (state-a-3-4.south) +(-2pt,4pt) edge [pre,bend left=30] ( $(state-a-3-2.south)+(2pt,4pt)$ );
+\path (state-a-4-4.south) +(-2pt,4pt) edge [pre,bend left=20] ( $(state-a-4-1.south)+(2pt,4pt)$ );
+\stoptikzpicture
+}
+\stopplacefigure
+
+
+\startplacefigure[title={\type{InvMixColumns}运算},reference=fig:inv-mix-columns]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+tnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\Tiny},
+snode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\Tiny},
+mnode/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.25em,font=\Tiny},
+node distance=0pt]
+
+\matrix (state-a) [matrix of nodes,nodes={snode}] 
+{
+  $a_{0,0}$ & $a_{0,1}$ & $a_{0,2}$ & $a_{0,3}$ \\
+  $a_{1,0}$ & $a_{1,1}$ & $a_{1,2}$ & $a_{1,3}$ \\
+  $a_{2,0}$ & $a_{2,1}$ & $a_{2,2}$ & $a_{2,3}$ \\
+  $a_{3,0}$ & $a_{3,1}$ & $a_{3,2}$ & $a_{3,3}$ \\
+};
+
+\matrix (state-b) [matrix of nodes,nodes={snode},right=4cm of state-a]
+{
+  $b_{0,0}$ & $b_{0,1}$ & $b_{0,2}$ & $b_{0,3}$ \\
+  $b_{1,0}$ & $b_{1,1}$ & $b_{1,2}$ & $b_{1,3}$ \\
+  $b_{2,0}$ & $b_{2,1}$ & $b_{2,2}$ & $b_{2,3}$ \\
+  $b_{3,0}$ & $b_{3,1}$ & $b_{3,2}$ & $b_{3,3}$ \\
+};
+
+\node [tnode] at ($ (state-a.east)!.5!(state-b.west) $) (mix-columns) {\type{InvMixColumns}};
+
+\matrix (coff) [matrix of nodes,nodes={mnode},above=6pt of mix-columns,xshift=0.4cm,label=left:{\switchtobodyfont[8pt] 左乘}]
+{
+  0e & 0b & 0d & 09 \\
+  09 & 0e & 0b & 0d \\
+  0d & 09 & 0e & 0b \\
+  0b & 0d & 09 & 0e \\
+};
+\stoptikzpicture
+}
+\stopplacefigure
+
+在\type{AddRoundKey}运算中使用了异或计算，由于异或计算本身具有自反性，即$a \otimes b \otimes b = a$，
+因此\type{AddRoundKey}的逆运算即是其自身。
+
+\type{InvSubBytes}是\type{SubBytes}的逆运算。在\type{InvSubBytes}运算中用到的$S'$盒恰好是
+\type{SubBytes}中\type{S}盒的反向字符替换表。
+
+\type{InvShiftRows}是\type{ShiftRows}的逆运算。在\type{InvShiftRows}运算中作用在状态矩阵上
+的移位操作往反方向上移动相应的格数便实现了\type{ShiftRows}的逆运算。
+
+\type{InvMixColumns}是\type{MixColumns}的逆运算。在有限域$GF(2^8)$上，由于
+
+\startformula
+\left[\startmatrix
+  \NC 0e \NC 0b \NC 0d \NC 09 \NR
+  \NC 09 \NC 0e \NC 0b \NC 0d \NR
+  \NC 0d \NC 09 \NC 0e \NC 0b \NR
+  \NC 0b \NC 0d \NC 09 \NC 0e \NR
+\stopmatrix\right]
+\left[\startmatrix
+  \NC 02 \NC 03 \NC 01 \NC 01 \NR
+  \NC 01 \NC 02 \NC 03 \NC 01 \NR
+  \NC 01 \NC 01 \NC 02 \NC 03 \NR
+  \NC 03 \NC 01 \NC 01 \NC 02 \NR
+\stopmatrix\right]
+=
+\left[\startmatrix
+  \NC 01 \NC 00 \NC 00 \NC 00 \NR
+  \NC 00 \NC 01 \NC 00 \NC 00 \NR
+  \NC 00 \NC 00 \NC 01 \NC 00 \NR
+  \NC 00 \NC 00 \NC 00 \NC 01 \NR
+\stopmatrix\right]
+\stopformula
+
+说明，这两个矩阵在有限域$GF(2^8)$上互逆，因此，左乘逆矩阵便可实现\type{MixColumns}的逆运算。
+\stopsubsection
+
+\startsubsection[title={Rijndael的安全性},reference=subsec:aes-crack]
+
+AES是目前被广泛采用的对称加密算法。AES加密算法（使用128，192，和256位密钥的版本）的安全性，在
+设计结构及密钥的长度上都已到达保护机密信息的标准。最高机密信息的传递，则至少需要192或256位的密钥
+长度。
+
+在密码学的意义上，只要存在一个方法，比穷举法还要更有效率，就能被视为一种“破解”。从应用的角度来看，
+这种程度的破解依然太不切实际，但理论上的突破有时仍可提供对漏洞模式的深入了解。
+
+由于密钥长度每增加1位，密钥空间将增加2倍，并且如果密钥的每个可能值的机会均相等，则意味着平均蛮力
+密钥搜索时间将增加一倍。这意味着蛮力搜索的工作量随着密钥长度的增加而呈指数增长。密钥长度本身并不
+意味着针对攻击的安全性，因为已经发现具有很长密钥的密码容易受到攻击。
+
+针对AES最大的争议则在于AES有一个相当井然有序的代数框架的数学结构。尽管相关的代数攻击尚未出现，
+但有许多学者认为，把安全性创建于未经透彻研究过的结构上是有风险的。不过，这也只是一种假设而已。
+到目前为止，尚无已知的实际攻击方法。不过，根据斯诺登的文件，美国国家安全局（NSA）正在研究基于
+$\tau$统计信息的加密攻击是否可能有助于破坏AES。
+\stopsubsection
+
+\stopsection
+
+\stopcomponent

@@ -1,0 +1,79 @@
+
+\startsection[title={信息安全所面临的威胁及对策}]
+\index{threats}
+
+回顾一下，我们前面初步介绍了六种密码技术：
+
+\startitemize
+\item 对称加密算法
+\item 非对称加密算法（公钥加密算法）
+\item 单向散列函数
+\item 消息认证码
+\item 数字签名
+\item 伪随机数生成器
+\stopitemize
+
+我们同时讨论了每种技术所解决的具体问题，这里把前面的内容再梳理一遍，用\in{图}[fig:cipher-mindmap]所示的思维导视图
+总结了信息安全所面临的潜在威胁以及针对各种安全威胁所能采用的密码技术及对策。我们没有把伪随机数生成器画在图里面，是因为
+它通常渗透在其他五种密码技术中使用，发挥了非常重要的作用。我们把这六种密码技术统称为{\it 密码学家的工具箱}。
+
+
+
+\startplacefigure
+  [title={信息安全所面临的威胁及其相应的密码技术对策思维导视图},
+  reference=fig:cipher-mindmap]
+\midaligned{
+  \starttikzpicture
+  \startscope[
+  small mindmap,
+  every node/.style={concept, circular drop shadow, execute at begin node=\hskip0pt},
+  root concept/.append style={
+    concept color=black,
+    fill=white, line width=0.6ex,
+    text=black},
+  text=white,
+  eavesdrop/.style={concept color=red!62.5!black,faded/.style={concept color=red!80!black}},
+  tamper/.style={concept color=blue!62.5!black,faded/.style={concept color=blue!80!black}},
+  spoofing/.style={concept color=orange!62.5!black,faded/.style={concept color=orange!80!black}},
+  repudiation/.style={concept color=green!62.5!black,faded/.style={concept color=green!80!black}},
+  grow cyclic,
+  level 1/.append style={level distance=2.8cm,sibling angle=60},
+  level 2/.append style={level distance=2.2cm,sibling angle=45}]
+    \node [root concept] (Threats) {信息安全所面临的威胁} % root
+      [clockwise from=180]
+      child [eavesdrop] { node (Eavesdrop) {窃听}
+        [clockwise from=180]
+        child [faded] { node (symmetric encryption) {对称加密算法} }
+        child [faded] { node (asymmetric encryption) {非对称加密算法} }
+      }
+      child [tamper] { node (Tamper) {篡改}
+        [clockwise from=135]
+        child [faded] { node (One-Way Hash Function) {单向散列函数} }
+        child [faded] { node (Message Authentication Code) {消息认证码} }
+        child [faded] { node (Digital Signature) {数字签名} }
+      }
+      child [repudiation] { node (Repudication) {抵赖}
+        [clockwise from=45]
+        child [faded] { node (Digital Signature) {数字签名} }
+      }
+      child [spoofing] { node (Spoofing) {伪装}
+        [clockwise from=45]
+        child [faded] { node (Message Authentication Code) {消息认证码} }
+        child [faded] { node (Digital Signature) {数字签名} }
+      };
+  \stopscope
+  \stoptikzpicture
+}
+\stopplacefigure
+
+从\in{图}[fig:cipher-mindmap]中，我们可以看到，有些密码技术可以用来解决信息安全中的多种威胁，例如，数字签名可以
+防止篡改、伪装和抵赖，但不提供保密。对于某些面临的威胁，也可能存在多种应对的密码技术，例如为了防止窃听导致信息被泄露，
+可以使用对称加密算法或非对称加密算法。但是每种密码技术都有着各自的特点，适用于不同的场景。后面章节，我们会对这些密码
+技术进行深入的探讨，逐个揭开它们的神秘面纱。
+
+% \placefigure
+%   [][fig:cipher-mindmap]
+%   {信息安全威胁及密码技术思维导视图}
+%   {\externalfigure[hacker.png]}
+
+\stopsection

@@ -1,0 +1,110 @@
+\startcomponent caesar
+
+\startsection[title={凯撒密码}]
+\index{caesar}
+
+我们把视角切换到世界历史的长河中，看看古罗马时期凯撒大帝是怎么使用加密算法对军事信息进行加密的。根据罗马早期纪传体作者
+盖乌斯·苏维托尼乌斯的记载，恺撒大帝的加密策略很简单，就是把字母按照字母表顺序向后移动几位，但是偏移量（offset）只有他
+和将军知道，如果移动后超过了字母表中的最后一个字母（对于英文字母表而言就是\type{Z}），就回到字母表的第一个字母重新开始
+下一轮。以英文字母表为例，在偏移量为3的情况下，\type{A}将会替换为\type{D}，\type{B}将会被替换为\type{E}，
+\type{W}会被替换为\type{Z}，\type{X}会被替换为\type{A}；明文\type{HELLO}会被转换为密文\type{KHOOR}。这种加密
+方法又被称为移位加密。
+
+
+\startplacefigure
+  [title={凯撒密码的加密原理：替换法}, reference=fig:caesar]
+
+\midaligned{
+\starttikzpicture
+  [pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+  post/.style={->,shorten >=1pt,>=stealth',semithick},
+  every node/.style={draw=red!62.5!black, thick, fill=white!62.5!black, minimum height=1.2em, minimum width=1.2em, font=\Tiny}]
+  
+  \foreach \a/\n in {A/0, B/1, C/2, D/3, E/4, F/5, G/6, H/7, I/8, 
+    J/9, K/10, L/11, M/12, N/13, O/14, P/15, Q/16, R/17, S/18,
+    T/19, U/20, V/21, W/22, X/23, Y/24, Z/25, A/26, B/27, C/28} {
+    \ifnum \n < 26
+    \node (\a-1) at (\n * 5.2mm, 2) {\a};
+    \fi
+    \ifnum \n > 2
+    \node (\a-2) at (\n * 5.2mm, 0) {\a};
+    \else
+    \node [dashed] (\a-2) at (\n * 5.2mm, 0) {\a};
+    \fi
+  }
+
+  \foreach \a/\b in {A/D, B/E, C/F, D/G, E/H, F/I, G/J, H/K, I/L, 
+    J/M, K/N, L/O, M/P, N/Q, O/R, P/S, Q/T, R/U, S/V,
+    T/W, U/X, V/Y, W/Z, X/A, Y/B, Z/C} {
+    \draw [->,shorten >=1pt,>=stealth',semithick] (\a-1.south) -- (\b-2.north);
+  }
+\stoptikzpicture
+}
+\stopplacefigure
+
+
+凯撒密码的解密方法也很一目了然，只需要将密文中的每个字母向相反方向平移规定的偏移量便可解密出明文。恺撒密码的加密、
+解密算法还能够通过同余的数学方法进行计算。首先将字母表中的字母按顺序用数字代替，$A=0$，$B=1$，...，$Z=25$。
+此时偏移量为$k$的加密算法的数学公式即为：
+
+\startformula
+E_k(x) = (x + k) \mod 26
+\stopformula
+
+解密算法的数学公式可以表示为：
+\startformula
+D_k(x) = (x + 26 - k) \mod 26
+\stopformula
+
+从加密和解密数学公式可以看出，当偏移量$k = 13$时（字母表内所有字母数量的一半），凯撒密码加密和解密算法的公式
+完全相同，这是一种特殊的凯撒密码的变种算法，被称为ROT13。ROT13在英文网络论坛常常用作隐藏八卦、妙句、谜题解答以及
+某些脏话的工具，目的是逃过版主或管理员的匆匆一瞥。因为ROT13的加密和解密计算公式完全相同，很明显，文字经过两次
+ROT13加密之后，会恢复成原来的文字。
+
+凯撒密码中的偏移量就相当于加密算法中的密钥。这个偏移量必须由发送者和接收者事先约定好。那么，当接收者以外的人
+窃取到用凯撒密码加密后的密文之后，是不是就无法破解这个密文了呢？或者换句话说，凯撒密码能够被破解吗？
+
+破解密码的复杂度很大程度上取决于{\it 密钥空间}（keyspace）的大小，所谓密钥空间是指密钥的取值范围到底有多大。凯撒
+密码中的密钥是偏移量$k$，其取值范围为0至25的整数，共26种可能的取值，密钥空间非常有限。攻击者往往可以采用暴力破解
+（brute-force attack）的方法就可以轻而易举地破解凯撒密码。
+
+假设发送者和接收者之间约定的偏移量为3，那么明文\type{CRYPTOGRAPHY}加密后的密文则为\type{FUBSWRJUDSKB}。
+当第三方窃听到密文之后，由于凯撒密码的密钥空间只有26种可能的取值，窃听者可以使用穷举搜索（exhausitive search）
+的方法对每种可能的密钥取值尝试一遍：
+
+\starttyping
+k =  0: FUBSWRJUDSKB => FUBSWRJUDSKB
+k =  1: FUBSWRJUDSKB => ETARVQITCRJA
+k =  2: FUBSWRJUDSKB => DSZQUPHSBQIZ
+k =  3: FUBSWRJUDSKB => CRYPTOGRAPHY
+k =  4: FUBSWRJUDSKB => BQXOSNFQZOGX
+k =  5: FUBSWRJUDSKB => APWNRMEPYNFW
+k =  6: FUBSWRJUDSKB => ZOVMQLDOXMEV
+k =  7: FUBSWRJUDSKB => YNULPKCNWLDU
+k =  8: FUBSWRJUDSKB => XMTKOJBMVKCT
+k =  9: FUBSWRJUDSKB => WLSJNIALUJBS
+k = 10: FUBSWRJUDSKB => VKRIMHZKTIAR
+k = 11: FUBSWRJUDSKB => UJQHLGYJSHZQ
+k = 12: FUBSWRJUDSKB => TIPGKFXIRGYP
+k = 13: FUBSWRJUDSKB => SHOFJEWHQFXO
+k = 14: FUBSWRJUDSKB => RGNEIDVGPEWN
+k = 15: FUBSWRJUDSKB => QFMDHCUFODVM
+k = 16: FUBSWRJUDSKB => PELCGBTENCUL
+k = 17: FUBSWRJUDSKB => ODKBFASDMBTK
+k = 18: FUBSWRJUDSKB => NCJAEZRCLASJ
+k = 19: FUBSWRJUDSKB => MBIZDYQBKZRI
+k = 20: FUBSWRJUDSKB => LAHYCXPAJYQH
+k = 21: FUBSWRJUDSKB => KZGXBWOZIXPG
+k = 22: FUBSWRJUDSKB => JYFWAVNYHWOF
+k = 23: FUBSWRJUDSKB => IXEVZUMXGVNE
+k = 24: FUBSWRJUDSKB => HWDUYTLWFUMD
+k = 25: FUBSWRJUDSKB => GVCTXSKVETLC
+\stoptyping
+
+纵览所有尝试的破解，就会发现只有当$k = 3$的时候，密文\type{FUBSWRJUDSKB}才可以解密出有意义的字符序列
+\type{CRYPTOGRAPHY}，即“密码学”的英文单词。因此，凯撒密码是一种极其不安全的加密方法，可以被攻击者在很快的时间
+内破解，无法保护重要的秘密。
+
+\stopsection
+
+\stopcomponent

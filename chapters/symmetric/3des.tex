@@ -1,0 +1,141 @@
+
+\startcomponent 3des
+
+\startsection[title={3DES加密算法},reference=sec:3des]
+\index{sec:3des}
+
+由于计算机运算能力不断增强，DES密码的密钥长度（56位）变得容易被暴力破解。3DES (Triple DES, 三重DES) 
+为了增强DES密码的强度，将DES重复三次来增加DES的密钥长度以避免被暴力破解。因此，3DES并不是一种全新的
+分组密码算法。
+
+\startsubsection[title={3DES的总体结构},reference=subsec:3des-structure]
+
+3DES加密算法的总体结构如\in{图}[fig:3des]所示。在加密和解密过程中，都需要经过3次DES处理。3DES使用
+“密钥包”，其包含3个DES密钥，K1，K2和K3，均为56位（除去奇偶校验位）。
+
+\startplacefigure[title={3DES密码算法总体结构},reference=fig:3des]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+ post/.style={->,shorten >=1pt,>=stealth',semithick},
+ labelnode/.style={inner sep=0,font=\Tiny},
+ elemnode/.style={draw=red!62.5!black,thick,fill=white!62.5!black,
+ minimum width=4em,minimum height=2em,font=\Tiny}]
+
+\matrix[row sep=1cm,column sep=8mm] {
+% row 1
+ &
+\node [elemnode] (c-des1) {DES}; &
+\node [elemnode] (c-des2) {DES$^{-1}$}; &
+\node [elemnode] (c-des3) {DES}; &
+  \\
+% row 2
+\node [elemnode] (plaintext) {明文分组}; &
+\node [elemnode] (k1) {密钥K1}; &
+\node [elemnode] (k2) {密钥K2}; &
+\node [elemnode] (k3) {密钥K3}; &
+\node [elemnode] (ciphertext) {密文分组}; \\
+% row 3
+&
+\node [elemnode] (d-des1) {DES$^{-1}$}; &
+\node [elemnode] (d-des2) {DES}; &
+\node [elemnode] (d-des3) {DES$^{-1}$}; &
+\\
+};
+
+\draw [post] (plaintext.north) |- (c-des1.west);
+\draw [post] (c-des1.east) -- (c-des2.west);
+\draw [post] (c-des2.east) -- (c-des3.west);
+\draw [post] (c-des3.east) -| (ciphertext.north);
+
+
+\draw [post] (ciphertext.south) |- (d-des3.east);
+\draw [post] (d-des3.west) -- (d-des2.east);
+\draw [post] (d-des2.west) -- (d-des1.east);
+\draw [post] (d-des1.west) -| (plaintext.south);
+
+\draw [post] (k1.north) -- (c-des1.south);
+\draw [post] (k1.south) -- (d-des1.north);
+\draw [post] (k2.north) -- (c-des2.south);
+\draw [post] (k2.south) -- (d-des2.north);
+\draw [post] (k3.north) -- (c-des3.south);
+\draw [post] (k3.south) -- (d-des3.north);
+
+\startscope[on background layer]
+\node [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=3mm, inner ysep=5mm, 
+ rounded corners, fit=(c-des1) (c-des3)] (encrypt) {};
+\node [labelnode,below=2pt of encrypt.north] {加密}; 
+\node [fill=white!62.5!black, draw=red!62.5!black, very thick, inner xsep=3mm, inner ysep=5mm,
+ rounded corners, fit=(d-des1) (d-des3)] (decrypt) {};
+\node [labelnode,above=2pt of decrypt.south] {解密};
+\stopscope
+\stoptikzpicture
+}
+\stopplacefigure
+
+在加密过程中，明文分组经过3次DES处理，即DES $\rightarrow$ DES$^{-1}$ $\rightarrow$ DES，这里，
+我们用DES$^{-1}$表示DES的解密。所以，在3DES加密过程中，实际的运算是：DES加密 $\rightarrow$ DES解密 
+$\rightarrow$ DES加密。这看起来有点不可思议，但实际上却是有意为之。这个设计是IBM提出来的，目的是为了
+让3DES能够向下兼容DES。当3DES的所有密钥K1、K2、K3都相同时，3DES也就等同于普通的DES了。这是因为前两次
+DES处理（DES加密 $\rightarrow$ DES解密）完成后的结果就是最初的明文分组。
+
+用$E$表示DES加密函数，$D$表示DES解密函数，那么3DES的加密算法可以表示为：
+
+\startformula
+ciphertext = E_{K3}(D_{K2}(E_{K1}(plaintext)))
+\stopformula
+
+也就是说，使用密钥K1进行DES加密，再用密钥K2进行DES“解密”，最后以密钥K3进行DES加密。
+
+而解密算法则和加密过程正好相反，是以密钥K3、密钥K2、密钥K1的顺序执行的，形式上可以表示为：
+
+\startformula
+plaintext = D_{K1}(E_{K2}(D_{K3}(ciphertext)))
+\stopformula
+
+即以密钥K3解密，以密钥K2“加密”，最后以密钥K1解密。无论是加密还是解密，中间一步都是前后两步的逆。
+
+\stopsubsection
+
+\startsubsection[title={密钥选项},reference=subsec:3des-keys]
+
+3DES标准定义了三种密钥选项：
+
+\startitemize[1,packed,broad]
+\item 密钥选项1：三个密钥是独立的，即$K1 \neq K2 \neq K3$。
+\item 密钥选项2：$K1$和$K2$是独立的，而$K3=K1$。
+\item 密钥选项3：三个密钥均相等，即$K1=K2=K3$。
+\stopitemize
+
+密钥选项1的强度最高，拥有$3 \times 56=168$个独立的密钥位。这种3DES密码算法称为DES-EDE3，EDE是
+加密 (Encryption) -- 解密 (Decrpytion) -- 加密 (Encryption) 3个单词首字母的缩写。
+
+密钥选项2的安全性稍低，拥有$2 \times 56=112$个独立的密钥位。该选项比简单的应用DES两次的强度较高，
+即使用K1和K2，因为它可以防御中途相遇攻击 (Meet-in-the-Middle Attack)。这种3DES密码算法称为DES-EDE2。
+
+% 介绍中途相遇攻击：https://zh.wikipedia.org/wiki/%E4%B8%AD%E9%80%94%E7%9B%B8%E9%81%87%E6%94%BB%E6%93%8A
+
+密钥选项3等同于普通DES，只有56个密钥位。这个选项提供了与DES的兼容性，因为第1和第2次DES操作相互抵消了。
+
+\stopsubsection
+
+\startsubsection[title={3DES密码现状},reference=subsec:3des-status-quo]
+
+银行机构目前还在普遍使用3DES，并持续开发和宣传基于3DES的标准，例如EMV。EMV三个字母分别代表Europay、
+MasterCard与Visa，是制定该标准最初的三家公司。EMV是国际金融业界对于智慧支付卡与可使用晶片卡的POS终端机
+及自动柜员机 (ATM) 等所制定的标准。EMV智慧卡（也称为IC卡）的信息储存在集成电路中而非过去的磁条里，但
+大部分EMV卡背也有可以向下兼容的磁条。芯片可以和插入式读卡器交换数据，非接触式智能卡还可以使用射频识别
+（RFID）技术在一定距离范围内交换数据。符合EMV标准的支付卡叫做芯片卡。
+
+此外，Microsoft OneNote和Microsoft Outlook 2007使用3DES密码保护用户数据。
+
+尽管3DES还有在使用，但是其两个独立密钥的变种DES-EDE2已经在2015年正式退出。在经过一系列安全分析和针对
+3DES的实例攻击演示之后，2017年11月，NIST建议应当限制3DES用于对数量在$2^{20}$个以上的64位分组（8MB）
+的数据进行加密，因此，TLS、IPSec和大文件加密不应该再使用3DES。目前，NIST正在推动2030年彻底废除3DES的
+使用，但是，随着密码研究揭露的越来越多的漏洞，3DES可能会被加速退出历史舞台。
+
+\stopsubsection
+
+\stopsection
+
+\stopcomponent
