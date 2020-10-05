@@ -42,8 +42,8 @@ Rijndael的优势在于集安全性、性能、效率、可实现性及灵活性
 Rijndael加密过程中，明文数据也需要经过多个轮次的转换后方能生成密文，每个轮次的转换操作由轮函数定义。同时，
 Rijndael也包括一个密钥调度算法来根据种子密钥（用户密钥）编排生成多组轮密钥。
 
-根据Rinjdael算法的定义，加密轮数会针对不同的分组及不同的密钥长度选择不同的数值。以字长为单位，1字长等于4个字节，
-用$N_b$表示分组的长度，$N_k$表示密钥的长度，那么，$N_b = 4$就是$4 \times 4 \times 8 = 128$比特，以此类推。
+根据Rinjdael算法的定义，加密轮数会针对不同的分组及不同的密钥长度选择不同的数值。以word（字长）为单位，1~word等于
+4个字节，用$N_b$表示分组的长度，$N_k$表示密钥的长度，那么，$N_b = 4$就是$4 \times 4 \times 8 = 128$比特，以此类推。
 Rinjdael给出的加密轮数$N_r$的选择如\in{表}[tab:rinjdael-rounds]所示。
 
 \placetable
@@ -487,15 +487,15 @@ node distance=0pt]
 
 密钥扩展算法是Rijndael的密钥编排实现算法，其目的是根据种子密钥（用户密钥）生成多组轮密钥。轮密钥用于
 每轮（包括第0轮）\type{AddRoundKey}运算中和状态矩阵进行按字节顺序的异或计算。我们继续用$N_b$、$N_k$、$N_r$来
-表示分组和密钥长度（以字长为单位），以及加密轮数（参见\in{表}[tab:rinjdael-rounds]）。Rijndael需要
+表示分组和密钥长度（以word为单位），以及加密轮数（参见\in{表}[tab:rinjdael-rounds]）。Rijndael需要
 扩展出$N_r + 1$个子密钥参与每轮的\type{AddRoundKey}运算。由于每轮子密钥的长度和分组长度$N_b$一致，
 所以，需要扩展的所有子密钥的总长度$N_w = N_b \times (N_r + 1)$个字。因为AES算法固定了分组长度为
-128位，即4个字长，因此，AES算法中$N_b = 4$。那么，AES加密算法需要根据种子密钥扩展的子密钥总长度$N_w$如
+128位，即4个word，因此，AES算法中$N_b = 4$。那么，AES加密算法需要根据种子密钥扩展的子密钥总长度$N_w$如
 \in{表}[tab:aes-nw]所示。
 
 \placetable
   [here][tab:aes-nw]
-  {AES扩展子密钥的字长数$N_w$}{
+  {AES扩展子密钥的word数$N_w$}{
   \starttable[|c|c|c|c|c|]
   \HL
   \NC               \VL {\bf $N_b$} \NC {\bf $N_k$} \NC {\bf $N_r$} \NC {\bf\darkred $N_w$} \NC\SR
@@ -507,7 +507,7 @@ node distance=0pt]
   \stoptable
   }
 
-将每轮子密钥以字长为单位排列成一个序列，用$w_i~(0 \leq i \leq N_w-1)$表示子密钥序列中的第$i$个元素，那么，
+将每轮子密钥以word为单位排列成一个序列，用$w_i~(0 \leq i \leq N_w-1)$表示子密钥序列中的第$i$个元素，那么，
 AES算法的密钥扩展就是计算每个$w_i$的值。$w_i$的计算可以用如下数学公式描述：
 
 \startformula
@@ -814,7 +814,7 @@ node distance=0pt]
 }
 \stopplacefigure
 
-在\type{AddRoundKey}运算中使用了异或计算，由于异或计算本身具有自反性，即$a \otimes b \otimes b = a$，
+在\type{AddRoundKey}运算中使用了异或计算，由于异或计算本身具有自反性，即$a \oplus b \oplus b = a$，
 因此\type{AddRoundKey}的逆运算即是其自身。
 
 \type{InvSubBytes}是\type{SubBytes}的逆运算。在\type{InvSubBytes}运算中用到的$S'$盒恰好是

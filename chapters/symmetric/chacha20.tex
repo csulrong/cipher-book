@@ -1,8 +1,498 @@
 \startcomponent chacha20
 
+% https://en.wikipedia.org/wiki/Salsa20
+% https://zh.wikipedia.org/wiki/Salsa20
+% https://cr.yp.to/snuffle/spec.pdf
+% https://tools.ietf.org/html/rfc7539
+% https://cr.yp.to/chacha.html
+% https://zhuanlan.zhihu.com/p/28566058
 \startsection[title={Chacha20加密算法},reference=sec:chacha20]
-\index{sec:blowfish}
+\index{sec:chacha20}
 
+ChaCha20是一种流式加密算法，它源自于Salsa20加密算法。2004年，ECRYPT启动了eSTREAM流密码计划的研究
+项目。丹尼尔·J·伯恩斯坦（Daniel J. Bernstein）在2005年设计出了Salsa20流式加密算法，被eSTREAM选中，
+成为最终胜出的7个算法之一。其特点是结构简单、易于实现，很安全（支持128比特或256比特的密钥），速度很快，
+也适合在嵌入式系统上实现。此外，Salsa20不受专利的约束。随后，在2008年，伯恩斯坦在Salsa基础上做了一些
+改动，发布了变种算法ChaCha，其目的是在不牺性能的前提下，增加每一轮的扩散。
+
+ChaCha20由Google公司率先在Andriod移动平台中的Chrome浏览器和Google网站间的HTTPS通讯时代替RC4使用。
+ChaCha20通常和Poly1305消息认证码（Message Authentication Code, MAC）算法一起配合使用，合称为
+ChaCha20-Poly1305算法。在密码学上，这种把加密算法和MAC算法的组合称为关联数据的认证加密
+（Authenticated Encryption with Aassociated Data， AEAD）。比如，AES-GCM就是另外一种AEAD算法。
+
+AEAD是一种同时具备{\it 保密性}，{\it 完整性}和{\it 可认证性}的加密形式。AEAD产生的原因很简单，单纯的
+对称加密算法，其解密步骤是无法确认密钥是否正确的。也就是说，加密后的数据可以用任何密钥执行解密运算，得到
+一组疑似原始数据，而不确认密钥是否是正确的时候，也就也不知道解密出来的原始数据是否正确。因此，需要在单纯的
+加密算法之上，加上一层验证手段，来确认解密步骤是否正确。这里，我们先对AEAD有个初步的认知，后面，我们在
+介绍到MAC算法的时候，会重点讨论AEAD。本小节，我们主要介绍ChaCha20加密算法。
+
+\startsubsection[title={ARX运算和操作函数},reference=subsec:salsa20-functions]
+
+Salsa20的核心是一个建立在基于Add-Rotate-XOR（ARX）操作的Hash函数之上，将一个64字节的输入序列转换为
+另一个64字节的输出序列。这个Hash函数产生的伪随机字节流和明文字节流进行异或运算生成密文字节流。这使得
+Salsa20具有了不同寻常的优势，它可以在恒定时间内定位到输出流中的任何位置。
+
+前面我们都是采用自顶向下的方法介绍各个加密算法的，即先介绍算法的总体结构，然后深入到算法运算的细节。现在，
+我们使用自底向上的方法来介绍Salsa20加密算法，先介绍其中采用的各种运算，再介绍salsa20是如何将这些运算组合
+起来的。
+
+{\bf ARX运算}
+
+在Salsa20算法内部，采用的3个基本运算是：{\it 32位模加}、{\it 循环移位}和{\it 异或计算}。异或运算自然
+不必多说了，普遍应用在密码算法中。我们用符号$\boxplus$表示模加运算，$w_1$和$w_2$两个word的32位
+模加运算则可以表示为：
+\startformula
+w_1 \boxplus w_2 = (w_1 + w_2) \mod 2^{32}
+\stopformula
+
+Salsa中的循环移位为循环左移操作，我们用$R^m$表示循环左移$m$位的运算，$R^m(w)$表示将32位的word~$w$循环
+左移$m$位。
+
+{\bf \type{QuarterRound}函数}
+
+用$w=(w_0, w_1, w_2, w_3)$表示由4个word组成的序列，那么${\mathtt QuarterRound}(w)$输出另外一个
+由4个word组成的序列$z=(z_0, z_1, z_2, z_3)={\mathtt QuarterRound}(w)$。Salsa算法中定义的
+\type{QuarterRound}函数如下：
+
+\startformula
+\startmathalignment[n=3,align=middle]
+\NC z_1 \NC = \NC w_1 \oplus (R^{7}(w_0 \boxplus w_3)) \NR
+\NC z_2 \NC = \NC w_2 \oplus (R^{9}(z_1 \boxplus w_0)) \NR
+\NC z_3 \NC = \NC w_3 \oplus (R^{13}(z_2 \boxplus w_1)) \NR
+\NC z_0 \NC = \NC w_0 \oplus (R^{18}(z_3 \boxplus w_2)) \NR
+\stopmathalignment
+\stopformula
+
+随后，在2008年，伯恩斯坦发布的ChaCha密码家族对Salsa的\type{QuarterRound}函数进行了修改，其目的是增加
+每一轮的扩散以实现相同或稍微提升的性能。ChaCha算法中的\type{QuarterRound}函数如下：
+
+\startformula
+\startmathalignment[n=3,align=middle]
+\NC w_0 = w_0 \boxplus w_1; \quad \NC w_3 = w_3 \oplus w_0; \quad \NC w_3 = R^{16}(w_3); \NR
+\NC w_2 = w_2 \boxplus w_3; \quad \NC w_1 = w_1 \oplus w_2; \quad \NC w_2 = R^{12}(w_2); \NR
+\NC w_0 = w_0 \boxplus w_1; \quad \NC w_3 = w_3 \oplus w_0; \quad \NC w_3 = R^{8}(w_3);  \NR
+\NC w_2 = w_2 \boxplus w_3; \quad \NC w_1 = w_1 \oplus w_2; \quad \NC w_2 = R^{7}(w_2);  \NR
+\stopmathalignment
+\stopformula
+
+\startformula
+(z_0, z_1, z_2, z_3) = (w_0, w_1, w_2, w_3)
+\stopformula
+
+\startplacefigure[title={\type{QuarterRound}的运算过程},reference=fig:quarterround]
+\startcombination[3*1]
+{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+word/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\switchtobodyfont[10pt]},
+add/.style={draw=none,fill=green!62.5!black,inner sep=-1pt,font=\switchtobodyfont[10pt]},
+rot/.style={draw=black,semithick,fill=green!62.5!black,inner sep=2pt,font=\switchtobodyfont[6pt]},
+xor/.style={draw=none,fill=green!62.5!black,inner sep=-2pt,shape=circle,font=\switchtobodyfont[12pt]},
+dot/.style={draw=black,fill=black,shape=circle,minimum size=2pt,inner sep=0},
+node distance=0pt]
+
+% 总体结构
+\matrix (qr) [column sep=3mm,row sep=3.95mm] 
+{
+\node[word] (w0) {$w_0$}; & & \node[word] (w1) {$w_1$}; & & \node[word] (w2) {$w_2$}; & & \node[word] (w3) {$w_3$}; \\
+\node[dot] (d1a) {}; & \node[add] (p1) {$\boxplus$}; & & & & & \node[dot] (d4a) {}; \\
+& \node[rot] (r7) {$R^7$}; & \node[xor] (x1) {$\oplus$}; & & & & \\
+& & \node[dot] (d2b) {}; & & & & \\
+\node[dot] (d1c) {}; & & & \node[add] (p2) {$\boxplus$}; & & & \\
+& & & \node[rot] (r9) {$R^9$}; & \node[xor] (x2) {$\oplus$}; & & \\
+& & & & \node[dot] (d3d) {}; & & \\
+& & \node[dot] (d2e) {}; & & & \node[add] (p3) {$\boxplus$}; & \\
+& & & & & \node[rot] (r13) {$R^{13}$}; & \node[xor] (x3) {$\oplus$}; \\
+& & & & & & \node[dot] (d4f) {}; \\
+& \node[add] (p4) {$\boxplus$}; & & & \node[dot] (d3g) {}; & & \\
+\node[xor] (x4) {$\oplus$}; & \node[rot] (r18) {$R^{18}$}; & & & & & \\
+\node[word] (z0) {$z_0$}; & & \node[word] (z1) {$z_1$}; & & \node[word] (z2) {$z_2$}; & & \node[word] (z3) {$z_3$}; \\
+};
+
+\path (p1) edge [pre] (d1a) edge [pre] (d4a) edge [post] (r7);
+\path (r7) edge [post] (x1);
+\draw [post] (d2b) -| (p2);
+\path (p2) edge [pre] (d1c) edge [post] (r9);
+\path (r9) edge [post] (x2);
+\draw [post] (d3d) -| (p3);
+\path (p3) edge [pre] (d2e) edge [post] (r13);
+\path (r13) edge [post] (x3);
+\draw [post] (d4f) -| (p4);
+\path (p4) edge [pre] (d3g) edge [post] (r18);
+\path (r18) edge [post] (x4);
+\path (x4) edge [pre] (w0) edge [post] (z0);
+\path (x1) edge [pre] (w1) edge [post] (z1);
+\path (x2) edge [pre] (w2) edge [post] (z2);
+\path (x3) edge [pre] (w3) edge [post] (z3);
+
+\startscope[on background layer]
+\node[fill=white!62.5!black,draw=red!62.5!black,very thick,inner sep=0.2cm,rounded corners,fit=(qr)] {};
+\stopscope
+\stoptikzpicture
+}{\Tiny\darkred Salsa的\type{QuarterRound}运算}
+{\qquad}{}
+{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+word/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=1.8em,font=\switchtobodyfont[10pt]},
+add/.style={draw=none,fill=green!62.5!black,inner sep=-1pt,font=\switchtobodyfont[10pt]},
+rot/.style={draw=black,semithick,fill=green!62.5!black,inner sep=2pt,font=\switchtobodyfont[6pt]},
+xor/.style={draw=none,fill=green!62.5!black,inner sep=-2pt,shape=circle,font=\switchtobodyfont[12pt]},
+dot/.style={draw=black,fill=black,shape=circle,minimum size=2pt,inner sep=0},
+node distance=0pt]
+
+% 总体结构
+\matrix (qr) [column sep=1cm,row sep=3mm] 
+{
+\node[word] (w0) {$w_0$}; & \node[word] (w1) {$w_1$}; & \node[word] (w2) {$w_2$}; & \node[word] (w3) {$w_3$}; \\
+\node[add] (p1) {$\boxplus$}; & \node[dot] (d1a) {};  &                           &                           \\
+\node[dot] (d0b) {};      &                           &                           & \node[xor] (x1) {$\oplus$}; \\
+&                           &                           & \node[rot] (r16) {$R_{16}$}; \\
+&                           & \node[add] (p2) {$\boxplus$}; & \node[dot] (d3c) {};     \\
+& \node[xor] (x2) {$\oplus$}; & \node[dot] (d2d) {};      &                           \\
+& \node[rot] (r12) {$R_{12}$}; &                        &                           \\
+\node[add] (p3) {$\boxplus$};  & \node[dot] (d1e) {};   &                           &                           \\
+\node[dot] (d0f) {};      &                           &                           & \node[xor] (x3) {$\oplus$}; \\
+&                           &                           & \node[rot] (r8) {$R_8$};  \\
+&                           & \node[add] (p4) {$\boxplus$}; & \node[dot] (d3g) {};  \\
+& \node[xor] (x4) {$\oplus$}; & \node[dot] (d2h) {};      &                           \\
+& \node[rot] (r7) {$R_7$};  &                           &                           \\
+\node[word] (z0) {$z_0$}; & \node[word] (z1) {$z_1$}; & \node[word] (z2) {$z_2$}; & \node[word] (z3) {$z_3$}; \\
+};
+
+\path (p1) edge [pre] (w0) edge [pre] (d1a);
+\path (x1) edge [pre] (w3) edge [pre] (d0b) edge [post] (r16);
+\path (p2) edge [pre] (d3c) edge [pre] (w2);
+\path (x2) edge [pre] (d2d) edge [pre] (w1) edge [post] (r12);
+\path (p3) edge [pre] (p1) edge [pre] (d1e);
+\path (x3) edge [pre] (r16) edge [pre] (d0f) edge [post] (r8);
+\path (p4) edge [pre] (d3g) edge [pre] (p2);
+\path (x4) edge [pre] (d2h) edge [pre] (r12) edge [post] (r7);
+\path (z0) edge [pre] (p3);
+\path (z1) edge [pre] (r7);
+\path (z2) edge [pre] (p4);
+\path (z3) edge [pre] (r8);
+
+\startscope[on background layer]
+\node[fill=white!62.5!black,draw=red!62.5!black,very thick,inner sep=0.2cm,rounded corners,fit=(qr)] {};
+\stopscope
+\stoptikzpicture
+}{\Tiny\darkred ChaCha的\type{QuarterRound}运算}
+\stopcombination
+\stopplacefigure
+
+\in{图}[fig:quarterround]展示了Salsa和ChaCha算法的\type{QuarterRound}运算过程。经过比较，不难
+发现ChaCha算法中的\type{QuarterRound}运算对每个word更新2次，增加了扩散性。
+
+{\bf ChaCha状态}
+
+ChaCha状态是一个以行为主序的$4 \times 4$的矩阵（如\in{图}[fig:chacha-state]所示），矩阵中的每个元素是一个word。
+\type{QuarterRound}运算每次从状态矩阵上选取4个元素进行转换运算。为简化表示，我们
+用${\mathtt QuarterRound}(a,b,c,d)$来表示选取状态矩阵中元素下标分别为$a$、$b$、$c$和$d$的word进行
+\type{QuarterRound}运算，即${\mathtt QuarterRound}(1,5,9,13)$表示对word序列$(w_1,w_5,w_9,w_{13})$进行
+\type{QuarterRound}运算。
+
+\startplacefigure[title={ChaCha状态矩阵},reference=fig:chacha-state]
+\midaligned{
+\starttikzpicture
+[word/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,minimum size=2em,font=\switchtobodyfont[8pt]},
+node distance=0pt]
+
+\matrix [matrix of nodes,nodes={word}]
+{
+$w_0$    & $w_1$    & $w_2$    & $w_3$    \\
+$w_4$    & $w_5$    & $w_6$    & $w_7$    \\
+$w_8$    & $w_9$    & $w_{10}$ & $w_{11}$ \\
+$w_{12}$ & $w_{13}$ & $w_{14}$ & $w_{15}$ \\
+};
+\stoptikzpicture
+}
+\stopplacefigure
+
+如果选取的4个元素属于状态矩阵的某一列，就被称为\type{ColumnRound}；如果选取的4个元素排列在状态矩阵的某一条对角线上，
+则被称之为\type{DiagnoalRound}。例如，${\mathtt QuarterRound}(1,5,9,13)$就是\type{ColumnRound}，
+${\mathtt QuarterRound}(0,5,10,15)$和${\mathtt QuarterRound}(2,7,8,13)$都属于\type{DiagnoalRound}。
+
+{\bf \type{LittleEndian}函数}
+
+在计算机内存中的字节排序分为两类：Big-Endian（大端）和Little-Endian（小端）。标准的Big-Endian和Little-Endian的
+定义如下：
+\startitemize[packed]
+\item Little-Endian就是低位字节排放在内存的低地址端，高位字节排放在内存的高地址端。
+\item Big-Endian就是高位字节排放在内存的低地址端，低位字节排放在内存的高地址端。
+\stopitemize
+
+根据上述定义，对于字节序列$b = (b_0, b_1, b_2, b_3)$，经过\type{LittleEndian}函数运算之后的word值可以表示为：
+\startformula
+{\mathtt LittleEndian}(b) = 2^{24} b_3 + 2^{16} b_2 + 2^8 b_1 + b_0
+\stopformula
+
+\stopsubsection
+
+\startsubsection[title={ChaCha20分组函数},reference=subsec:chacha20-group]
+
+ChaCha20分组函数通过对如下的输入数据形成状态矩阵，并对状态矩阵进行多轮\type{QuarterRound}运算后，计算出密钥流的分组。
+\startitemize[packed]
+\item {\it 256位的密钥}：32个字节被划分成由8个32位的\type{LittleEndian}整数排列组成的word序列；
+\item {\it 96位的随机常量（nonce）}：12个字节被划分成3个32位的\type{LittleEndian}整数排列组成的word序列；
+\item {\it 32位的分组计数器}：4个字节被\type{LittleEndian}函数转换成一个word。
+\stopitemize
+
+首先，根据\in{图}[fig:chacha-init-state]所示的过程初始化一个$4 \times 4$的状态矩阵，共16个word、64个字节。
+以上三个输入数据的长度加起来共48个字节，缺少的16个字节由常量字符串“\type{expand 32-byte k}”中每个字母对应
+的ASCII编码后的字节序列补上。
+
+\startplacefigure[title={ChaCha状态矩阵初始化过程},reference=fig:chacha-init-state]
+\midaligned{
+\starttikzpicture
+[const/.style={draw=red!62.5!black,semithick,fill=yellow!62.5!black,minimum size=1em,inner sep=0,text=black,font=\switchtobodyfont[6pt]},
+key/.style={draw=red!62.5!black,semithick,fill=green!62.5!black,minimum size=1em,inner sep=0,text=black,font=\switchtobodyfont[6pt]},
+nonce/.style={draw=red!62.5!black,semithick,fill=blue!62.5!white,minimum size=1em,inner sep=0,text=black,font=\switchtobodyfont[6pt]},
+counter/.style={draw=red!62.5!black,semithick,fill=red!62.5!white,minimum size=1em,inner sep=0,text=black,font=\switchtobodyfont[6pt]},
+state const/.style={draw=red!62.5!black,semithick,fill=yellow!62.5!black,minimum width=2.5em,minimum height=1.5em,inner sep=0,text=black,font=\switchtobodyfont[8pt]},
+state key/.style={draw=red!62.5!black,semithick,fill=green!62.5!black,minimum width=2.5em,minimum height=1.5em,inner sep=0,text=black,font=\switchtobodyfont[8pt]},
+state nonce/.style={draw=red!62.5!black,semithick,fill=blue!62.5!white,minimum width=2.5em,minimum height=1.5em,inner sep=0,text=black,font=\switchtobodyfont[8pt]},
+state counter/.style={draw=red!62.5!black,semithick,fill=red!62.5!white,minimum width=2.5em,minimum height=1.5em,inner sep=0,text=black,font=\switchtobodyfont[8pt]},
+le/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\switchtobodyfont[8pt]},
+label/.style={font=\switchtobodyfont[6pt]},
+group const/.style={draw=yellow!30!black,semithick,fill=none,dashed},
+group key/.style={draw=green!30!black,semithick,fill=none,dashed},
+group nonce/.style={draw=blue!90!white,semithick,fill=none,dashed},
+group counter/.style={draw=red!90!white,semithick,fill=none,dashed},
+node distance=0pt]
+
+\matrix (const) [matrix of nodes,nodes={const,anchor=south}]
+{
+e & x & p & a & n & d & ~ & 3 & 2 & - & b & y & t & e & ~ & k \\
+};
+\node[label,anchor=west,above right=0pt of const.north west] (const-label) {常量字符串字节序列（16字节）};
+\node[group const,scale=1.02,fit=(const-1-1) (const-1-2) (const-1-3) (const-1-4)] (g0) {};
+
+\matrix (nonce) [matrix of nodes,right=0.5cm of const,nodes={nonce,anchor=south}]
+{
+$n_0$ & $n_1$ & $n_2$ & $n_3$ & $n_4$ & $n_5$ & $n_6$ & $n_7$ & $n_8$ & $n_9$ & $n_{10}$ & $n_{11}$ \\
+};
+\node[label,anchor=west,above right=0pt of nonce.north west] (nonce-label) {随机常量字节序列（12字节）};
+\node[group nonce,scale=1.02,fit=(nonce-1-1) (nonce-1-2) (nonce-1-3) (nonce-1-4)] (g13) {};
+
+\matrix (key) [matrix of nodes,matrix anchor=west,below=1.5cm of const.west,nodes={key,anchor=south}]
+{
+$k_0$ & $k_1$ & $k_2$ & $k_3$ & $k_4$ & $k_5$ & $k_6$ & $k_7$ & \cdots & \cdots & \cdots & \cdots & \cdots & \cdots & \cdots & \cdots & $k_{24}$ & $k_{25}$ & $k_{26}$ & $k_{27}$ & $k_{28}$ & $k_{29}$ & $k_{30}$ & $k_{31}$ & \\
+};
+\node[label,anchor=west,above right=0pt of key.north west] (key-label) {密钥字节序列（32字节）};
+\node[group key,scale=1.02,fit=(key-1-1) (key-1-2) (key-1-3) (key-1-4)] (g4) {};
+\node[group key,scale=1.02,fit=(key-1-21) (key-1-22) (key-1-23) (key-1-24)] (g11) {};
+
+\matrix (counter) [matrix of nodes,right=0.5cm of key,nodes={counter,anchor=south}]
+{
+$c_0$ & $c_1$ & $c_2$ & $c_3$ \\
+};
+\node[label,anchor=west,text width=4.5em,above right=0pt of counter.north west] (counter-label) {分组计数器字节序列（4字节）};
+\node[group counter,scale=1.02,fit=(counter-1-1) (counter-1-2) (counter-1-3) (counter-1-4)] (g12) {};
+
+\startscope[on background layer]
+\node[fill=white!62.5!black,draw=red!62.5!black,very thick,
+inner xsep=0.3cm,inner ysep=0.2cm,rounded corners,
+fit=(const) (nonce) (key) (counter) (const-label) (nonce-label) (key-label) (counter-label)] (input) {};
+\stopscope
+
+\matrix (state0) [matrix anchor=west,below=2cm of input.south west,xshift=0.8cm] {
+\node[state const] (w0) {\type{expa}};  & \node[state const]{\type{nd 3}};  & \node[state const]{\type{2-by}};  & \node[state const]{\type{te k}};  \\
+\node[state key] (w4) {$k_{0..3}$};   & \node[state key]{$k_{4..7}$};   & \node[state key]{$k_{8..11}$};  & \node[state key]{$k_{12..15}$}; \\
+\node[state key]{$k_{16..19}$}; & \node[state key]{$k_{20..23}$}; & \node[state key]{$k_{24..27}$}; & \node[state key] (w11) {$k_{28..31}$}; \\
+\node[state counter] (w12) {$c_{0..3}$}; & \node[state nonce] (w13) {$n_{0..3}$};   & \node[state nonce]{$n_{4..7}$};   & \node[state nonce]{$n_{8..11}$};  \\
+};
+
+\matrix (state1) [right=3cm of state0] {
+\node[state const]{\type{apxe}};  & \node[state const]{\type{3 dn}};  & \node[state const]{\type{yb-2}};  & \node[state const]{\type{k et}};  \\
+\node[state key]{$k_{3..0}$};   & \node[state key]{$k_{7..4}$};   & \node[state key]{$k_{11..8}$};  & \node[state key]{$k_{15..12}$}; \\
+\node[state key]{$k_{19..16}$}; & \node[state key]{$k_{23..20}$}; & \node[state key]{$k_{27..24}$}; & \node[state key]{$k_{31..28}$}; \\
+\node[state counter]{$c_{3..0}$};   & \node[state nonce]{$n_{3..0}$};   & \node[state nonce]{$n_{7..4}$};   & \node[state nonce]{$n_{11..8}$};  \\
+};
+
+\node [le] at ($ (state0.east)!.5!(state1.west) $) (le) {\type{LittleEndian}};
+
+\draw [group const,->,shorten >=1pt,>=stealth'] (g0.west) to [bend right=40] (w0.base);
+\draw [group key,->,shorten >=1pt,>=stealth'] (g4.south) to [bend left=15] (w4.base);
+\draw [group key,->,shorten >=1pt,>=stealth'] (g11.south) to [bend left=10] (w11.base);
+\draw [group counter,->,shorten >=1pt,>=stealth'] (g12.south west) to [bend left=20] (w12.base);
+\draw [group nonce,->,shorten >=1pt,>=stealth'] (g13.south) to [bend left=10] (w13.base);
+\stoptikzpicture
+}
+\stopplacefigure
+
+由\in{图}[fig:chacha-init-state]可知，ChaCha状态的初始化过程如下：
+\startitemize[packed]
+\item 初始状态的前4个word，由常量字符串“\type{expand 32-byte k}”对应的ASCII编码后的字节序列，经
+\type{LittleEndian}运算而来。
+\item 256位的密钥对应的字节序列经\type{LittleEndian}运算后，得到初始状态矩阵中的第5至12个字节，即$w_4$ --- $w_11$。
+\item 4字节的分组计数器的\type{LittleEndian}值填充到第13个字节。
+\item 96位的随机常量nonce所对应的字节序列经\type{LittleEndian}转换后，填充到初始状态矩阵的最后3个字节。
+\stopitemize
+
+由此可知，一旦密钥和随机常量确定后，初始状态就取决于分组计数器的值了。在早期的ChaCha版本中，还存在64位分组计数器和
+64位随机常量组合的方案，但在RFC8439中，已经舍弃了这种组合，确定了32位分组计数器的方案。这就意味着当密钥和随机常量
+确定后，最多有$2^{32}$个状态（分组），把每个64字节的状态当做512位的比特流，那么最多可以形成
+$2^{32} \times 512 \div 8~bytes = 256GB$不重复的密钥流，这在很多应用场合下，已经够用了。对于需要加密超过
+256GB数据的应用，比如文件或磁盘加密等，推荐使用早期的64位分组计数器和64位随机常量组合的方案。
+
+在确定了初始状态矩阵之后，ChaCha20算法执行20轮由\type{ColumnRound}和\type{DiagnoalRound}交替进行的运算。
+每轮运算执行4次\type{QuarterRound}计算。在轮计算为\type{ColumnRound}时，执行如下的4次\type{QuarterRound}
+计算，确保状态矩阵中的每个word都替换掉。
+\startformula
+\startmathalignment[n=1,align=middle]
+{\mathtt QuarterRound}(0,4,8,12)  \NR
+{\mathtt QuarterRound}(1,5,9,13)  \NR
+{\mathtt QuarterRound}(2,6,10,14) \NR
+{\mathtt QuarterRound}(3,7,11,15) \NR
+\stopmathalignment
+\stopformula
+
+在轮计算为\type{DiagnoalRound}时，执行的\type{QuarterRound}计算如下。4次\type{QuarterRound}计算同样确保
+状态矩阵中的每个word都被替换。
+\startformula
+\startmathalignment[n=1,align=middle]
+{\mathtt QuarterRound}(0,5,10,15) \NR
+{\mathtt QuarterRound}(1,6,11,12) \NR
+{\mathtt QuarterRound}(2,7,8,13)  \NR
+{\mathtt QuarterRound}(3,4,9,14)  \NR
+\stopmathalignment
+\stopformula
+
+在20轮计算以后，也就是经过对上述8个\type{QuarterRound}运算进行10次迭代之后输出的状态矩阵再和初始状态矩阵按元素
+进行32位模加计算所得到的结果状态矩阵，进一步使用\type{LittleEndian}序列化成64字节的分组。整个过程参见示意
+\in{图}[fig:chacha-block]。
+
+\startplacefigure[title={ChaCha分组函数计算过程图},reference=fig:chacha-block]
+\midaligned{
+\starttikzpicture
+[pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+word/.style={draw=red!62.5!black,thin,fill=white!62.5!black,minimum size=1.4em,inner sep=0pt,font=\switchtobodyfont[6pt]},
+round/.style={draw=red!62.5!black,semithick,fill=white!62.5!black,double,rectangle split,rectangle split parts=2,text width=9em,font=\switchtobodyfont[8pt]},
+add/.style={draw=none,fill=green!62.5!black,inner sep=-1pt,font=\switchtobodyfont[10pt]},
+le/.style={draw=red!62.5!black,thick,fill=white!62.5!black,single arrow,font=\switchtobodyfont[8pt]},
+label/.style={font=\switchtobodyfont[6pt]},
+every text node part/.style={align=center},
+node distance=0pt]
+
+\matrix (state0) [matrix of nodes,nodes={word}]
+{
+$w_0$    & $w_1$    & $w_2$    & $w_3$    \\
+$w_4$    & $w_5$    & $w_6$    & $w_7$    \\
+$w_8$    & $w_9$    & $w_{10}$ & $w_{11}$ \\
+$w_{12}$ & $w_{13}$ & $w_{14}$ & $w_{15}$ \\
+};
+\node [label,above=0pt of state0] {初始状态矩阵};
+
+\node [round,right=0.5cm of state0] (column-round) {
+\type{ColumnRound}
+\nodepart{two}
+\vbox{
+${\mathtt QuarterRound}(0,4,8,12)$  \crlf
+${\mathtt QuarterRound}(1,5,9,13)$  \crlf
+${\mathtt QuarterRound}(2,6,10,14)$ \crlf
+${\mathtt QuarterRound}(3,7,11,15)$ \crlf
+}};
+
+\matrix (state1) [matrix of nodes,nodes={word},right=0.5cm of column-round]
+{
+$w_0$    & $w_1$    & $w_2$    & $w_3$    \\
+$w_4$    & $w_5$    & $w_6$    & $w_7$    \\
+$w_8$    & $w_9$    & $w_{10}$ & $w_{11}$ \\
+$w_{12}$ & $w_{13}$ & $w_{14}$ & $w_{15}$ \\
+};
+\node [label,above=0pt of state1] {过渡状态矩阵};
+
+\node [round,right=0.5cm of state1] (diagnoal-round) {
+\type{DiagnoalRound}
+\nodepart{two}
+\vbox{
+${\mathtt QuarterRound}(0,5,10,15)$ \crlf
+${\mathtt QuarterRound}(1,6,11,12)$ \crlf
+${\mathtt QuarterRound}(2,7,8,13)$  \crlf
+${\mathtt QuarterRound}(3,4,9,14)$  \crlf
+}};
+
+\matrix (state2) [matrix of nodes,nodes={word},right=0.5cm of diagnoal-round]
+{
+$w_0$    & $w_1$    & $w_2$    & $w_3$    \\
+$w_4$    & $w_5$    & $w_6$    & $w_7$    \\
+$w_8$    & $w_9$    & $w_{10}$ & $w_{11}$ \\
+$w_{12}$ & $w_{13}$ & $w_{14}$ & $w_{15}$ \\
+};
+\node [label,above=0pt of state2] {过渡状态矩阵};
+
+\node [word,below=0.3cm of state1,inner sep=4pt] (iterate) {10次迭代};
+
+\draw [post] (state0) -- (column-round);
+\draw [post] (column-round) -- (state1);
+\draw [post] (state1) -- (diagnoal-round);
+\draw [post] (diagnoal-round) -- (state2);
+
+\draw [post] (state2.east) -- ++(0.3cm,0) |- (iterate.east);
+\draw [pre] ( $(column-round.west) + (-0.3cm,0)$ ) |- (iterate.west);
+
+\node [add,below=1cm of state0] (add) {$\boxplus$};
+\draw [post] (state2.east) -- ++(0.6cm,0) |- (add.east);
+\draw [post] (state0.south) -- (add.north);
+
+\matrix (state3) [matrix of nodes,nodes={word},below=0.6cm of add]
+{
+$w_0$    & $w_1$    & $w_2$    & $w_3$    \\
+$w_4$    & $w_5$    & $w_6$    & $w_7$    \\
+$w_8$    & $w_9$    & $w_{10}$ & $w_{11}$ \\
+$w_{12}$ & $w_{13}$ & $w_{14}$ & $w_{15}$ \\
+};
+\node [label,above=0pt of state3] {结果状态矩阵};
+\draw [post] (add) -- (state3);
+
+\matrix (state4) [matrix of nodes,nodes={word},right=2.5cm of state3]
+{
+$w_0$    & $w_1$    & $w_2$    & $w_3$    \\
+$w_4$    & $w_5$    & $w_6$    & $w_7$    \\
+$w_8$    & $w_9$    & $w_{10}$ & $w_{11}$ \\
+$w_{12}$ & $w_{13}$ & $w_{14}$ & $w_{15}$ \\
+};
+\node [label,above=0pt of state4] {\type{LittleEndian}后的状态矩阵};
+
+\node [le] at ($ (state3.east)!.5!(state4.west) $) (le) {\type{LittleEndian}};
+
+\matrix (bytes) [matrix of nodes,nodes={word,anchor=south},right=2cm of state4]
+{
+$b_0$ & $b_1$ & $b_2$ & $b_3$ & \cdots & \cdots & \cdots & \cdots & $b_{60}$ & $b_{61}$ & $b_{62}$ & $b_{63}$ \\
+};
+\node [label,above=0pt of bytes] {512位的密钥流字节序列};
+
+\node [le] at ($ (state4.east)!.5!(bytes.west) $) (le) {序列化};
+\stoptikzpicture
+}
+\stopplacefigure
+\stopsubsection
+
+\startsubsection[title={ChaCha20加解密过程},reference=subsec:chacha20-encrypt]
+
+ChaCha20是一种流式加密算法，通过连续调用分组函数来生成连续的密钥流。每次调用分组函数的种子密钥和随机常量nonce值
+都是固定不变的，只对分组计数器进行递增。这样，每次调用分组函数生成了不同的512比特的密钥流片段。分组函数的调用次数
+取决于明文数据的长度。明文数据字节序列和密钥流字节序列按位置顺序依次进行异或计算便得到了加密后的密文数据。由于异或
+计算具有自反性，解密和加密过程相同，将密文数据字节序列和分组函数生成的密钥流进行异或后，解密出明文数据。
+
+\stopsubsection
+
+\startsubsection[title={ChaCha20的应用},reference=subsec:chacha20-application]
+
+% http://bxr.su/OpenBSD/usr.bin/ssh/PROTOCOL.chacha20poly1305
+在Google采用了ChaCha20-Poly1305来替代RC4完成互联网的安全通信之后，ChaCha20-Poly1305算法也以
+\type{chacha20-poly1305@openssh.com}成为OpenSSH中的一个新密码套件。
+
+ChaCha20-Poly1305在IKE和IPsec中的使用已在RFC 7634中标准化。在RFC 7905中，ChaCha20-Poly1305已经
+被加入TLS扩展标准。
+
+若CPU不支持AES指令集，ChaCha20可提供比AES更好的性能。因此，ChaCha20通常被广泛应用在基于ARM CPU的移动设备上。
+
+\stopsubsection
 
 \stopsection
 

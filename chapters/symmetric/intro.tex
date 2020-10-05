@@ -17,26 +17,25 @@ edge from parent/.style={red!62.5!black,-o,thick,draw}]
 \node {现代密码算法}
 child {node {对称加密算法}
   child {node {分组密码}
-    child {node {DES算法}}
-    child {node {3DES算法}}
-    child {node {AES算法}}
-    child {node {Blowfish算法}}
+    child {node {DES}}
+    child {node {3DES}}
+    child {node {AES}}
   }
   child {node {流密码}
-    child {node {RC4算法}}
-    child {node {SEAL算法}}
+    child {node {RC4}}
+    child {node {ChaCha20}}
   }
 }
 child {node {非对称加密算法}
-  child[sibling distance=17mm] {node {RSA算法}}
-  child[sibling distance=17mm] {node {EIGamal算法}}
-  child[sibling distance=17mm] {node {ECC算法}}
+  child[sibling distance=17mm] {node {RSA}}
+  child[sibling distance=17mm] {node {EIGamal}}
+  child[sibling distance=17mm] {node {ECC}}
 };
 \stoptikzpicture
 }
 \stopplacefigure
 
-其中，对称加密算法还分为流密码和分组密码。本章将具体介绍几种常用的对称加密算法，包括流密码RC4和
-分组密码DES、3DES、AES以及Blowfish。
+其中，对称加密算法还分为流密码和分组密码。本章将具体介绍几种常用的对称加密算法，包括RC4和ChaCha20两种流密码，以及
+DES、3DES和AES三种分组密码。
 
 \stopcomponent
