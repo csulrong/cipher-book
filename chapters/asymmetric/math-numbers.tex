@@ -1,0 +1,190 @@
+\startcomponent math-numbers
+
+\startsection[title={必备的数学知识},reference=sec:math-numbers]
+\index{sec:math-numbers}
+
+在讲解DH密钥交换算法和RSA加密算法之前，有必要了解一下一些必备的数论知识。数论是纯粹数学的分支之一，主要研究整数的性质，
+我们先来了解如下几个基本的概念。
+
+\startitemize
+% https://blog.csdn.net/q376420785/article/details/8557266
+\head {\bf 质数}
+
+质数是指在一个大于1的自然数中，除了1和该整数自身外，不能被其他自然数整除的数。这个概念，我们在上小学的时候都
+学过了，这里就不再过多解释了。
+
+\head {\bf 互质数}
+
+公约数只有1的两个数叫做互质数。很显然，两个不同的质数一定是互质数。常用的判断两个数是否互质的算法是{\it 辗转相除法}，
+又称{\it 欧几里得算法}（Euclidean algorithm）。辗转相除法首次出现于欧几里得的《几何原本》，而在中国则可以追溯至
+东汉出现的《九章算术》。辗转相除法用于计算两个整数的最大公约数。如果两个整数的最大公约数为1，则说明它们必为互质数。
+
+辗转相除法基于如下原理：两个整数的最大公约数等于其中较小的数和较大数相除余数的最大公约数。例如，252和105的最大
+公约数是21（$252 = 21 \times 12; 105 = 21 \times 5$）；因为$252 − 105 = 21 \times (12 − 5) = 147$，
+所以147和105的最大公约数也是21。在这个过程中，较大的数缩小了，所以继续进行同样的计算可以不断缩小这两个数直至
+其中一个变成0。这时，所剩下的还没有变成0的数就是两数的最大公约数。辗转相除法是一种递归算法，每一步计算的输出值
+就是下一步计算时的输入值。
+
+假设，我们要计算$a$和$b$（$a >= b$）两个数的最大公约数$\gcd(a,b)$，第$i$步带余除法的商为$q_i$，
+余数为$r_{i+1}$，则辗转相除法可以写成如下形式：
+
+\startformula
+\startmathalignment[n=4,align=middle]
+\NC r_0 \NC   =    \NC a \NR
+\NC r_1 \NC   =    \NC b \NR
+\NC     \NC \vdots \NC   \NR
+\NC r_{i+1} \NC =  \NC r_{i-1} - q_i r_i \quad (0 \leq r_{i+1} < \lvert r_i \rvert ) \NR
+\NC     \NC \vdots \NC   \NR
+\stopmathalignment
+\stopformula
+
+当某步得到的$r_{i+1}=0$时，计算结束。上一步得到的$r_i$即为$a$、$b$的最大公约数。 
+
+\head {\bf 模运算}
+
+模运算即求余运算。和模运算紧密相关的一个概念是“同余”。数学上，当两个整数除以同一个正整数，若得相同余数，则二整数
+同余。两个整数$a$、$b$，若它们除以正整数$m$所得的余数相等，则称$a$和$b$对于模$m$同余，记作: $a \equiv b \pmod{m}$；
+读作：$a$同余于$b$模$m$，或者$a$与$b$关于模$m$同余。例如：$26 \equiv 14 \pmod{12}$。
+
+% https://zh.wikipedia.org/zh-cn/%E5%90%8C%E9%A4%98#%E6%80%A7%E8%B4%A8
+模运算具有如下一些基本性质：
+
+    \startitemize[3]
+    \head {\bf 整除性}
+    \startformula
+    a \equiv b \pmod{m} \Rightarrow k \cdot m = a - b, k \in \mathbb{Z}.
+    \stopformula
+    $k$为整数集$\mathbb{Z}$中的某个整数。也就是说，$a$和$b$之差是$m$的倍数。
+
+    \head {\bf 传递性}
+    \startformula
+    \left.\startmatrix
+    a \equiv b \pmod{m} \cr
+    b \equiv c \pmod{m} \cr
+    \stopmatrix\right\}
+    \Rightarrow
+    a \equiv c \pmod{m}.
+    \stopformula
+
+    \head {\bf 保持基本运算}
+
+    \startformula
+    \left.\startmatrix
+    a \equiv b \pmod{m} \cr
+    c \equiv d \pmod{m} \cr
+    \stopmatrix\right\}
+    \Rightarrow
+    \left\{\startmatrix
+    a \pm c \equiv b \pm d \pmod{m} \cr
+    ac \equiv bd \pmod{m} \cr
+    \stopmatrix\right.
+    \stopformula
+
+    这个性质可以进一步引申出：
+
+    \placeformula[formula:mod-exp]
+    \startformula
+    a \equiv b \pmod{m} \Rightarrow
+    \left\{\startmatrix
+    an \equiv bn \pmod{m}, \forall n \in \mathbb{Z} \cr
+    a^n \equiv b^n \pmod{m}, \forall n \in \mathbb{N}^0 \cr
+    \stopmatrix\right.
+    \stopformula
+
+    \head {\bf 除法原理}
+
+    如果$m_1$和$m_2$都可以整除$(a-b)$，那么$m_1$和$m_2$的最小公倍数${\mathrm lcm}(m_1,m_2)$必定可以整除$(a-b)$，
+    记为$a \equiv b \pmod{{\mathrm lcm}(m_1,m_2)}$。这可以推广成以下性质：
+
+    \placeformula[formula:mod-m]
+    \startformula
+    \left.\startmatrix
+    a \equiv b \pmod{m_1} \cr
+    a \equiv b \pmod{m_2} \cr
+    \vdots  \cr
+    a \equiv b \pmod{m_n} \cr
+    \stopmatrix\right\}
+    \Rightarrow
+    a \equiv b \pmod{{\mathrm lcm}(m_1,m_2,\cdots,m_n)}, \quad (n \geq 2).
+    \stopformula
+
+    \stopitemize
+
+\head {\bf 模反元素}
+
+两个正整数$a$和$m$互质，那么一定可以找到整数$b$，使得 $ab-1$被$m$整除，即$ab\equiv 1 \pmod{m}$，这时，$b$就
+叫做$a$的{\it 模反元素}，也称为模倒数或者模逆元。有时，也用$a^{-1}$来表示$a$的模反元素。
+
+\head {\bf 扩展欧几里得算法求模反元素}
+
+求模反元素是RSA加密算法中获得所需公钥、私钥的必要步骤。扩展欧几里得算法是欧几里得算法（辗转相除法）的扩展，可以在求得$a$、
+$b$的最大公约数的同时，能找到整数$x$、$y$（其中一个很可能是负数），使它们满足如下的{\it 贝祖等式}：
+
+\startformula
+ax + by = \gcd(a,b)
+\stopformula
+
+扩展欧几里得算法在辗转相除法的基础上每步增加了$s_i$和$t_i$两组序列，并令$s_0 = 1, s_1 = 0$和$t_0 = 0, t_1 = 1$，
+在辗转相除法每步计算$r_{i+1}$之外额外计算 $s_{i+1} = s_{i−1} − q_i s_i$和$t_{i+1} = t_{i−1} − q_i t_i$，亦即：
+
+\placeformula[formula:extend-euclidean]
+\startformula
+\startmathalignment[n=7,align={right,left,right,left,right,left,middle}]
+\NC r_0 \NC = a, \NC \quad s_0 \NC = 1, \NC \quad t_0 \NC = 0; \NC \NR
+\NC r_1 \NC = b, \NC \quad s_1 \NC = 0, \NC \quad t_1 \NC = 1; \NC \NR
+\NC   \NC \vdots \NC   \NC \vdots \NC   \NC \vdots \NC \NR
+\NC r_{i+1} \NC = r_{i-1} - q_i r_i, \NC \quad s_{i+1} \NC = s_{i-1} - q_i s_i, \NC \quad t_{i+1} \NC = t_{i-1} - q_i t_i; \NC \quad (0 \leq r_{i+1} < \lvert r_i \rvert ) \NR
+\NC   \NC \vdots \NC   \NC \vdots \NC   \NC \vdots \NC \NR
+\stopmathalignment
+\stopformula
+
+算法结束条件与辗转相除法一致，也是$r_{i+1}=0$，此时所得的$s_i$和$t_i$即满足等式$\gcd(a,b)=r_{i}=a s_i + b t_i$。
+
+下表以$a = 240$、$b = 46$为例演示了扩展欧几里得算法。所得的最大公约数是2，所得贝祖等式为
+$\gcd(240,46)=2=-9 \times 240+47 \times 46$。
+
+\midaligned{
+\starttable[|c|c|c|c|c|]
+\HL
+\NC {\bf 序号$i$}  \VL {\bf 商$q_{i-1}$} \NC {\bf 余数$r_i$} \NC {\bf $s_i$} \NC {\bf $t_i$} \NC\SR
+\HL
+\NC 0  \VL                 \NC 240                  \NC 1                    \NC 0                      \NC\FR
+\NC 1  \VL                 \NC 46                   \NC 0                    \NC 1                      \NC\MR
+\NC 2  \VL $240 \div 46=5$ \NC $240−5 \times 46=10$ \NC $1−5 \times 0=1$     \NC $0−5 \times 1=−5$      \NC\MR
+\NC 3  \VL $46 \div 10=4$  \NC $46−4 \times 10=6$   \NC $0−4 \times 1=−4$    \NC $1−4 \times (−5)=21$   \NC\MR
+\NC 4  \VL $10 \div 6=1$   \NC $10−1 \times 6=4$    \NC $1−1 \times (−4)=5$  \NC $−5−1 \times 21=−26$   \NC\MR
+\NC 5  \VL $6 \div 4=1$    \NC $6−1 \times 4=2$     \NC $−4−1 \times 5=−9$   \NC $21−1 \times (−26)=47$ \NC\MR
+\NC 6  \VL $4 \div 2=2$    \NC $4−2 \times 2=0$     \NC $5−2 \times (−9)=23$ \NC $−26−2 \times 47=−120$ \NC\LR
+\HL
+\stoptable
+}
+
+\head {\bf 欧拉函数}
+
+在数论中，对正整数$n$，欧拉函数$\varphi(n)$是小于或等于$n$的正整数中与$n$互质的数的数目。此函数以其首名研究者欧拉
+命名，它又称为$\varphi$函数或是欧拉总计函数（totient function）。例如$\varphi(8) = 4$，因为1、3、5、7均和8互质。
+
+当$n$为质数时，$\varphi(n) = n-1$。 欧拉函数是积性函数，即当$m$和$n$互质时，$\varphi(mn)=\varphi(m)\varphi(n)$。
+
+\head {\bf 欧拉定理}
+
+欧拉定理证明当$a$、$n$为两个互质的正整数时，则有
+
+\placeformula[formula:eula-theorem]
+\startformula
+a^{\varphi(n)} \equiv 1 \pmod{n}
+\stopformula
+
+其中$\varphi(n)$为欧拉函数。
+欧拉定理的证明过程非常复杂，这里，我们只要记住这个结论就可以了。
+
+上述结果可分解为$a^{\varphi(n)}=a \cdot a^{\varphi(n)-1} \equiv 1 \pmod{n}$，这样，$a^{\varphi(n)-1}$即
+为$a$关于模$n$的模反元素。
+
+当$n$为质数$p$时，结合欧拉函数，就有：$a^{p-1} \equiv 1 {\pmod p}$，这就是著名的费马小定理，是欧拉定理的特例。
+
+\stopitemize
+
+\stopsection
+
+\stopcomponent

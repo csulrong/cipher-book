@@ -1,0 +1,145 @@
+\startcomponent dh
+
+\startsection[title={DH密钥交换},reference=sec:dh]
+\index{sec:dh}
+
+DH（Diffie-Hellman）密钥交换算法是第一个实用的在不安全的信道上创建共享密钥的方法，解决了密钥传送问题。
+这个共享密钥可以在后续的通信中作为对称加密算法的密钥来加密通信内容。DH密钥交换算法由惠特菲尔德·迪菲
+（Whitfield Diffie）和马丁·赫尔曼（Martin Hellman）在1976年首次发表，这个方法被发明后不久出现
+了RSA公钥加密算法。
+
+\startsubsection[title={DH密钥交换算法的原理},reference=subsec:dh-steps]
+DH密钥交换算法为通信双方在不安全的信道上建立的共享密钥可以作为双方在公共网络上使用对称加密算法加密数据的
+密钥。假设甲乙双方需要传递加密算法的密钥，我们看DH密钥交换算法怎么实现在一个不安全的信道上共享密钥的，
+具体的算法步骤描述如下。
+
+\startitemize[n]
+\item 首先，甲乙双方协定使用质数$p$和底数$g$。
+\item 甲选择一个秘密整数$a$，计算$A=g^a \pmod{p}$，将$A$发送给乙。
+\item 乙也选择一个秘密整数$b$，计算$B=g^b \pmod{p}$，将$B$发送给甲。
+\item 甲计算$e=B^a \pmod{p}$。
+\item 乙计算$e=A^b \pmod{p}$。
+\stopitemize
+
+密钥交换过程结束后，甲乙双方均计算得到了相同的密钥$e$。DH密钥交换过程所用到的计算非常巧妙，它利用了我们在
+前面介绍模运算时所引申出来的性质（\in{公式}[formula:mod-exp]），最终让通信双方协商出相同的密钥。我们
+只要证明$B^a \equiv A^b \pmod{p}$，就可以推断甲和乙计算出的密钥$e$是相等的。根据模运算\in{公式}[formula:mod-exp]，
+我们可以得到：
+
+\startformula
+\startmathalignment[n=3,align={left,middle,right}]
+\NC A=g^a \pmod{p} \NC \Rightarrow \NC A^b \equiv g^{ab} \pmod{p} \NR
+\NC B=g^b \pmod{p} \NC \Rightarrow \NC B^a \equiv g^{ab} \pmod{p} \NR
+\stopmathalignment
+\stopformula
+
+进而，根据模运算的传递性质便得到：$B^a \equiv A^b \pmod{p}$。
+
+我们也可以用\in{图}[fig:dh-colors]来形象地解释DH密钥交换算法的原理和过程。
+
+\startplacefigure[title={图解DH密钥交换的概念},reference=fig:dh-colors]
+\midaligned{
+\starttikzpicture[
+pre/.style={<-,shorten <=1pt,>=stealth',semithick},
+post/.style={->,shorten >=1pt,>=stealth',semithick},
+bucket/.style={cylinder,aspect=0.6,rotate=90,minimum height=0.8cm,minimum width=1cm,draw=black,semithick},
+bucket-yellow/.style={bucket,cylinder uses custom fill,cylinder body fill=yellow,cylinder end fill=yellow},
+bucket-red/.style={bucket,cylinder uses custom fill,cylinder body fill=red,cylinder end fill=red},
+bucket-cyan/.style={bucket,cylinder uses custom fill,cylinder body fill=cyan,cylinder end fill=cyan},
+bucket-orange/.style={bucket,cylinder uses custom fill,cylinder body fill=orange,cylinder end fill=orange},
+bucket-blue/.style={bucket,cylinder uses custom fill,cylinder body fill=blue!50!white,cylinder end fill=blue!50!white},
+bucket-brown/.style={bucket,cylinder uses custom fill,cylinder body fill=yellow!40!black,cylinder end fill=yellow!40!black},
+textnode/.style={draw=none,fill=none,font=\switchtobodyfont[8pt]},
+node distance=0pt
+]
+\node [bucket] (a) {};
+\node [bucket-yellow,minimum height=0.25cm,anchor=bottom] at (a.bottom) (a-yellow) {};
+\node [bucket,right=4cm of a.bottom] (b) {};
+\node [bucket-yellow,minimum height=0.25cm,anchor=bottom] at (b.bottom) (b-yellow) {};
+\node [textnode] at ($ (a.center)!0.5!(b.center) $) {相同颜色的颜料};
+\node [textnode] at ($ (a.top)+(0,3mm) $) {甲};
+\node [textnode] at ($ (b.top)+(0,3mm) $) {乙};
+
+\node [bucket-red,minimum height=0.25cm,anchor=top] at ($ (a.bottom)+(0,-3mm) $) (a-red) {};
+\node [bucket-cyan,minimum height=0.25cm,anchor=top] at ($ (b.bottom)+(0,-3mm) $) (b-cyan) {};
+\node [textnode] at ($ (a.bottom)!0.5!(a-red.top) $) {+};
+\node [textnode] at ($ (b.bottom)!0.5!(b-cyan.top) $) {+};
+\node [textnode] at ($ (a-red.center)!0.5!(b-cyan.center) $) {秘密颜色};
+
+\node [bucket,anchor=top] at ($ (a-red.bottom)+(0,-3mm) $) (a-orange-bucket) {};
+\node [bucket-orange,minimum height=0.5cm,anchor=bottom] at (a-orange-bucket.bottom) (a-orange) {};
+\node [bucket,anchor=top] at ($ (b-cyan.bottom)+(0,-3mm) $) (b-blue-bucket) {};
+\node [bucket-blue,minimum height=0.5cm,anchor=bottom] at (b-blue-bucket.bottom) (b-blue) {};
+\node [textnode] at ($ (a-red.bottom)!0.5!(a-orange-bucket.top) $) {=};
+\node [textnode] at ($ (b-cyan.bottom)!0.5!(b-blue-bucket.top) $) {=};
+
+\node [bucket,anchor=top] at ($ (a-orange.bottom)+(0,-1cm) $) (a-blue-bucket) {};
+\node [bucket-blue,minimum height=0.5cm,anchor=bottom] at (a-blue-bucket.bottom) (a-blue) {};
+\node [bucket,anchor=top] at ($ (b-blue.bottom)+(0,-1cm) $) (b-orange-bucket) {};
+\node [bucket-orange,minimum height=0.5cm,anchor=bottom] at (b-orange-bucket.bottom) (b-orange) {};
+\draw [post] (a-orange-bucket.before bottom) -- (b-orange-bucket.before top);
+\draw [post] (b-blue-bucket.after bottom) -- (a-blue-bucket.after top);
+\node [textnode] at ($ (a-orange-bucket.before bottom)!0.5!(b-blue-bucket.after bottom) $) {交换调色桶};
+
+\node [bucket-red,minimum height=0.25cm,anchor=top] at ($ (a-blue.bottom)+(0,-3mm) $) (a-red2) {};
+\node [bucket-cyan,minimum height=0.25cm,anchor=top] at ($ (b-orange.bottom)+(0,-3mm) $) (b-cyan2) {};
+\node [textnode] at ($ (a-blue.bottom)!0.5!(a-red2.top) $) {+};
+\node [textnode] at ($ (b-orange.bottom)!0.5!(b-cyan2.top) $) {+};
+\node [textnode] at ($ (a-red2.center)!0.5!(b-cyan2.center) $) {秘密颜色};
+
+\node [bucket-brown,anchor=top] at ($ (a-red2.bottom)+(0,-3mm) $) (a-brown) {};
+\node [bucket-brown,anchor=top] at ($ (b-cyan2.bottom)+(0,-3mm) $) (b-brown) {};
+\node [textnode] at ($ (a-red2.bottom)!0.5!(a-brown.top) $) {=};
+\node [textnode] at ($ (b-cyan2.bottom)!0.5!(b-brown.top) $) {=};
+\node [textnode] at ($ (a-brown.center)!0.5!(b-brown.center) $) {公共的秘密颜色};
+\stoptikzpicture
+}
+\stopplacefigure
+
+\definecolor[brown][r=0.5,g=0.5,b=0.0]
+\startitemize[n]
+\item 甲乙双方协商好一个共同的颜色{\tikz\filldraw[fill=yellow] (0,0) rectangle (8pt,8pt);}作为颜料桶的底色。【{\darkred 甲乙双方协定相同的质数$p$和底数$g$}。】
+\item 甲选择一个秘密颜色{\tikz\filldraw[fill=red] (0,0) rectangle (8pt,8pt);}。【{\darkred 甲选择一个秘密整数$a$。}】
+\item 乙也选择一个秘密颜色{\tikz\filldraw[fill=cyan] (0,0) rectangle (8pt,8pt);}。【{\darkred 乙也选择一个秘密整数$b$。}】
+\item 甲将秘密颜色添加到颜料桶中，混合后得到过渡颜色{\tikz\filldraw[fill=orange] (0,0) rectangle (8pt,8pt);}。【{\darkred 甲计算$A=g^a \pmod{p}$。}】
+\item 乙也将秘密颜色添加到颜料桶中，混合后得到过渡颜色{\tikz\filldraw[fill=blue!50!white] (0,0) rectangle (8pt,8pt);}。【{\darkred 乙计算$B=g^b \pmod{p}$。}】
+\item 甲乙双方交换调色桶。【{\darkred 甲将$A$发送给乙，乙将$B$发送给甲。}】
+\item 甲再次把秘密颜色添加到颜料桶中，混合后得到最终的秘密颜色{\tikz\filldraw[fill=yellow!40!black] (0,0) rectangle (8pt,8pt);}。【{\darkred 甲计算$e=B^a \pmod{p}$。}】
+\item 乙也再次把秘密颜色添加到颜料桶中，混合后得到最终的秘密颜色{\tikz\filldraw[fill=yellow!40!black] (0,0) rectangle (8pt,8pt);}。【{\darkred 乙计算$e=A^b \pmod{p}$。}】
+\stopitemize
+
+\stopsubsection
+
+\startsubsection[title={DH密钥交换的安全性分析},reference=subsec:dh-security]
+
+在DH密钥交换过程中，甲乙通信双方各自生成一个只有自己知道的秘密整数$a$和$b$，这两个秘密整数需要他们
+各自安全保管，不能相互透露，也不会公开给任何第三方。除了这两个秘密整数之外，其它的参数要么是公开的，
+要么可能被第三方截获。我们定义这些整数的含义如下：
+
+\startitemize[packed]
+\item $a$：甲的私钥
+\item $b$：乙的私钥
+\item $A$：甲的公钥
+\item $B$：乙的公钥
+\stopitemize
+
+现在，我们假设不怀好意的丙监听了甲和乙的通信，他截获了甲和乙协商好的质数$p$和底数$g$，他还可能监听
+到甲和乙交换的公钥$A$和$B$。但是，由于丙不知道甲和乙的私钥$a$和$b$，所以，他就无法直接计算出他们
+最终的共享密钥。然而，丙在得知甲和乙交换的公钥$A$和$B$的情况下，能否反推出他们的私钥$a$和$b$呢？
+这就是{\it 离散对数问题}。
+
+在实数域中，对数的定义$\log_b{a}$是指对于给定的$a$和$b$，有一个数$x$，使得$b^x=a$。相应地，
+在模运算的情况下，当模$m$有原根时，设$b$为模$m$的一个原根，则当$x \equiv b^k \pmod{m}$时：
+
+\startformula
+{\mathrm ind}_b{x} \equiv k \pmod{m}
+\stopformula
+
+这里，${\mathrm ind}_b{x}$是$x$以整数$b$为底，关于模$m$的离散对数值。离散对数在一些特殊情况下
+可以快速计算。然而，当整数非常大时，通常没有非常高效的方法来计算它们。离散对数求解的困难性就奠定了DH密钥
+交换算法的安全性基础。除DH密钥交换算法之外，公钥密码学中的多个重要算法均是建立在寻找离散对数的问题解
+的困难性的基础之上。
+\stopsubsection
+\stopsection
+
+\stopcomponent
