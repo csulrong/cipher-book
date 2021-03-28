@@ -1180,6 +1180,26 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 \stopsubsubject
 
 \stopsubsection
+
+\startsubsection[title={基于椭圆曲线扩展的加密算法},reference=sec:ecc-schemes]
+
+一些基于离散对数问题的加密算法或数字签名算法，通过扩展椭圆曲线之后，增强了安全性。这些算法包括：
+
+\startitemize
+\item 椭圆曲线迪菲-赫尔曼密钥交换（ECDH）
+\item MQV密钥协商算法（ECMQV）
+\item ElGamal离散对数密码体制（ECElGamal）
+\item 椭圆曲线数字签名算法（ECDSA）
+\stopitemize
+
+对于采用椭圆曲线加密的算法来说，完成算法所必须的群操作比同样大小的质因数分解或模整数离散对数系统要慢。
+因此使用椭圆曲线的加密算法能用小得多的密钥长度来提供同等的安全，在这方面来说它确实比例如RSA之类的更快。
+ECC被广泛认为是在给定密钥长度的情况下最强大的非对称加密算法，因此在对带宽要求十分紧的连接中会十分有用。 
+
+椭圆加密算法的应用范围很广，如 TLS、OpenPGP以及SSH都在使用，在比特币以及其他加密数字货币中也得到广泛
+使用。另外我国重点推广的国密SM2算法也正是基于椭圆曲线算法。
+\stopsubsection
+
 \stopsection
 
 \stopcomponent
@@ -1190,3 +1210,5 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 % https://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/
 % https://ehds.github.io/uploads/papers/ecc.pdf
 % https://www.secg.org/
+% https://silence-linhl.github.io/blog/2020/04/01/ECC/#%E5%A5%BD%E4%BA%86%EF%BC%8C%E5%BC%80%E5%A7%8B%E8%BF%9B%E5%85%A5%E4%B8%BB%E9%A2%98%EF%BC%9AElliptic-Curve-Cryptography-ECC
+% https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.186-4.pdf
