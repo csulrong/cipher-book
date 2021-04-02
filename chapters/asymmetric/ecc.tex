@@ -986,9 +986,9 @@ $y^2=x^3-3x+10$在有限域$\mathbb{F}_{19}$、$\mathbb{F}_{97}$和$\mathbb{F}_{
 
 \stopsubsubject
 
-\startsubsubject[title={有限域上椭圆曲线的代数加法},reference=subsubsec:ec-fp-algebra]
+\startsubsubject[title={有限域上椭圆曲线的代数加法}]
 
-除了在每一个表达式后面加上一个$\pmod{p}$的操作以外，其它与\in[subsubsec:ecc-algebra]{代数加法}一节中所描述的步骤都
+除了在每一个表达式后面加上一个关于$p$的模运算以外，其它与\in[subsubsec:ecc-algebra]{代数加法}一节中所描述的步骤都
 相同。因此，令$P=(x_P,y_P)$、$Q=(x_Q,y_Q)$、$R=(x_R,y_R)$，我们可以按如下方程计算$P+Q=-R$：
 
 \startformula
@@ -998,6 +998,8 @@ $y^2=x^3-3x+10$在有限域$\mathbb{F}_{19}$、$\mathbb{F}_{97}$和$\mathbb{F}_{
 \NC     \NC \equiv \NC [y_Q + k(x_R - x_Q)] \pmod{p} \NR
 \stopmathalignment
 \stopformula
+
+分以下两种情形计算斜率$k$。
 
 \startitemize
 \item 如果$P \neq Q$，斜率$k$的形式如下：
@@ -1018,7 +1020,7 @@ k \equiv (3x_P^2+a)(2y_P)^{-1} \pmod{p}
 这里，你会发现数学的美妙之处：把椭圆曲线从实数域转换到有限域之后，点的几何加法和代数加法的公式表现出惊人的相似。
 \stopsubsubject
 
-\startsubsubject[title={数乘和循环子群},reference=subsubsec:ec-cylic]
+\startsubsubject[title={数乘和循环子群}]
 
 在有限域$\mathbb{F}_p$上的椭圆曲线的乘法有个很有意思的属性。取一个曲线：$y^2 \equiv x^3+2x+3 \pmod{97}$和
 点$P=(3,6)$，现在来计算$P$的所有倍数：
@@ -1088,7 +1090,7 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 
 \stopsubsubject
 
-\startsubsubject[title={子群的阶},reference=subsubsec:ec-group-order]
+\startsubsubject[title={子群的阶}]
 
 首先，我们要定义一下在一个群有多少个点就叫做这个群的“阶”（order）。穷举椭圆曲线在有限域${\mathbb F}_p$中所有可能的值
 的时间复杂度为$O(p)$。当$p$很大的时候，这算下来就很慢很慢，有些不太可行。好在有一个更快的算法来计算阶---Schoof算法。
@@ -1107,7 +1109,7 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 
 \stopsubsubject
 
-\startsubsubject[title={找基点和离散对数},reference=subsubsec:ec-base-point]
+\startsubsubject[title={找基点和离散对数}]
 
 在ECC算法中，我们想找到一个阶数比较大的子群。所以通常呢，我们会选择一条椭圆曲线，然后去计算它的阶$N$，选择一个以较大的
 因子作为子群的阶$n$，最终，依此找到一个合适的基点。也就是说，我们的计算步骤并不是先选择一个基点然后去计算它的阶，而是
@@ -1157,11 +1159,13 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 
 \startsubsubject[title={密钥对的生成}]
 
+消息的接收方按照如下过程生成密钥对，自己保管私钥，将公钥发送给信息的发送方。
+
 \startitemize[n]
-\item 接收方选取椭圆曲线的参数$p$、$a$、$b$，并寻找椭圆曲线上一点作为基点$G$。
-\item 接收方在$\{1,\ldots,n-1\}$范围内随机选择整数$d$作为私钥。
-\item 接收方计算$H=dG$，$H$即为公钥。
-\item 接收方把椭圆曲线参数$p$、$a$、$b$，基点$G$，以及公钥$H$传给发送方。
+\item 选取椭圆曲线的参数$p$、$a$、$b$，并寻找椭圆曲线上一点作为基点$G$。
+\item 在$\{1,\ldots,n-1\}$范围内随机选择整数$d$作为私钥。
+\item 计算$H=dG$，$H$即为公钥。
+\item 把椭圆曲线参数$p$、$a$、$b$，基点$G$，以及公钥$H$传给发送方。
 \stopitemize
 
 接收方知道了私钥$d$和基点$G$（还有主要参数中的其他参数），求得公钥$H$是很容易的。相反，发送方知道公钥$H$和基点$G$，
@@ -1170,6 +1174,8 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 
 \startsubsubject[title={加解密过程}]
 
+消息的发送方使用公钥对消息进行加密生成密文，接收方使用私钥对密文进行解密。
+
 \startitemize[n]
 \item 发送方选择随机数$r$，将明文消息编码到椭圆曲线上的点$M$。
 \item 发送方生成密文$C$，该密文是一个点对，$C=\{rG, M+rH\}$。
@@ -1177,6 +1183,7 @@ nP + mP = \underbrace{P + P + \cdots + P}_{\mathrm{n~times}} + \underbrace{P + P
 \item 接收方收到密文$C$后进行解密计算：$M+rH-d(rG)=M+r(dG)-d(rG)=M$。
 \item 接收方对$M$解码还原出明文消息。
 \stopitemize
+
 \stopsubsubject
 
 \stopsubsection
